@@ -70,9 +70,10 @@ export function RepairsBySiteChart({
 
   
   const { chartData, seriesKeys  } = useMemo(() => {
-	  
+	  console.log('repairDyna 1', repairDyna);
 	  if (!repairDyna || repairDyna.length === 0) {
-		  
+	
+console.log('repairDyna 2', repairDyna);	
 		  return { chartData: [], seriesKeys: [] };
 		}
 		//console.log('hiii repair', JSON.stringify(repair, null, 2));
@@ -238,7 +239,7 @@ console.log('seriesKeys: ', seriesKeys);
     });
 
     return { chartData: data, seriesKeys };
-    }, [selectedYear, selectedSites, selectedDepartments, viewMode]);
+    }, [selectedYear, selectedSites, selectedDepartments, viewMode, repairDyna]);
 
   const MAX_VISIBLE_SERIES = 10;
 
