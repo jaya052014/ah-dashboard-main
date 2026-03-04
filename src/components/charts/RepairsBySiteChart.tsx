@@ -54,7 +54,7 @@ export function RepairsBySiteChart({
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+        const response = await fetch('https://junoedge.com/api/api/v1.0/dview/CustomerDashboard');
         const jsonData = await response.json();
 		//console.log('json chart data : ', jsonData.responseData);
         setRepair(jsonData.responseData['RRByPlant']); // Store the result in state

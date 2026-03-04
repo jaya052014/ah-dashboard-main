@@ -105,7 +105,7 @@ async function getAllStatusSummariesDynamic (): Promise<Record<RepairStatus, { c
   ];
   
 	try {
-	  const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+	  const response = await fetch('https://junoedge.com/api/api/v1.0/dview/CustomerDashboard');
 	  
 	  if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
