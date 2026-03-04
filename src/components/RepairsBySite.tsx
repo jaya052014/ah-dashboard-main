@@ -10,6 +10,7 @@ type RepairsBySiteProps = {
 type ViewMode = "sites" | "departments";
 
 const YEAR_OPTIONS = [
+	{ value: "2026", label: "2026" },
   { value: "2025", label: "2025" },
   { value: "2024", label: "2024" },
   { value: "2023", label: "2023" },
@@ -18,7 +19,7 @@ const YEAR_OPTIONS = [
 
 export function RepairsBySite({ selectedSites, selectedDepartments }: RepairsBySiteProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("sites");
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const [selectedYear, setSelectedYear] = useState<string>("2026");
 
   return (
     <section className="orders-table-card dashboard-section">
