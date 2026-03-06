@@ -52,12 +52,25 @@ export function RepairsBySiteChart({
   
   useEffect(() => {
     const fetchData = async () => {
+		setRepair(null);
       setLoading(true);
       try {
-        const response = await fetch('https://junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
         const jsonData = await response.json();
 		//console.log('json chart data : ', jsonData.responseData);
-        setRepair(jsonData.responseData['RRByPlant']); // Store the result in state
+		if (viewMode == 'sites')
+		{
+			console.error("viewMode site:", viewMode);		
+			setRepair(jsonData.responseData['RRByPlant']); // Store the result in state
+			console.error("repairDyna site:", repairDyna);
+		}
+		else if (viewMode == 'departments')
+		{	
+			console.error("viewMode dept:", viewMode);	
+			setRepair(jsonData.responseData['RRByDept']);
+			console.error("repairDyna dept:", repairDyna);
+		}
+		
       } catch (error) {
         console.error("Fetch error:", error);
       } finally {
@@ -65,23 +78,23 @@ export function RepairsBySiteChart({
       }
     };
     fetchData();
-  }, []);
+  }, [viewMode]);
   	// Jaya - EOC
 
   
   const { chartData, seriesKeys  } = useMemo(() => {
-	  console.log('repairDyna 1', repairDyna);
+	  //console.log('repairDyna 1', repairDyna);
 	  if (!repairDyna || repairDyna.length === 0) {
 	
-console.log('repairDyna 2', repairDyna);	
+//console.log('repairDyna 2', repairDyna);	
 		  return { chartData: [], seriesKeys: [] };
 		}
 		//console.log('hiii repair', JSON.stringify(repair, null, 2));
     // Calculate year boundaries
     const yearStart = new Date(selectedYear, 0, 1);
     const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
-	console.log("yearStart",yearStart.getFullYear());
-	console.log("yearEnd",yearEnd.getFullYear());
+	//console.log("yearStart",yearStart.getFullYear());
+	//console.log("yearEnd",yearEnd.getFullYear());
 	
     // Filter repairs based on global filters and year
 	// Jaya - BOC
@@ -90,11 +103,11 @@ console.log('repairDyna 2', repairDyna);
 	let filtered = repairDyna.filter((repair) => {
 	// Jaya - EOC
 	
-	console.log('filtered', JSON.stringify(repairDyna, null, 2));
+//console.log('filtered', JSON.stringify(repairDyna, null, 2));
 	
       // Site filter
       const hasSiteFilter = selectedSites.length > 0 && !selectedSites.includes("all");
-	  console.log('hasSiteFilter: ', hasSiteFilter);
+	  //console.log('hasSiteFilter: ', hasSiteFilter);
       if (hasSiteFilter) {
         const rowSite = repair.site || "";
         if (!selectedSites.includes(rowSite)) {
@@ -104,7 +117,7 @@ console.log('repairDyna 2', repairDyna);
 
       // Department filter
       const hasDepartmentFilter = selectedDepartments.length > 0 && !selectedDepartments.includes("all");
-	  console.log('hasDepartmentFilter: ', hasDepartmentFilter);
+	  //console.log('hasDepartmentFilter: ', hasDepartmentFilter);
       if (hasDepartmentFilter) {
         const rowDepartment = repair.department || "";
         if (!selectedDepartments.includes(rowDepartment)) {
@@ -114,7 +127,7 @@ console.log('repairDyna 2', repairDyna);
 
       // Year filter - check if any status transition falls within the selected year
       if (repair.statusHistory && repair.statusHistory.length > 0) {
-		  console.log('repair.statusHistory: ', repair.statusHistory);
+		  //console.log('repair.statusHistory: ', repair.statusHistory);
         const hasTransitionInYear = repair.statusHistory.some((entry) => {
           const entryDate = new Date(entry.date);
           return entryDate >= yearStart && entryDate <= yearEnd;
@@ -123,7 +136,7 @@ console.log('repairDyna 2', repairDyna);
           return false;
         }
       } else if (repair.receivedDate) {
-		  console.log('repair.statusHistory: ', repair.receivedDate);
+		  //console.log('repair.statusHistory: ', repair.receivedDate);
         // Fallback to receivedDate if no statusHistory
         const repairDate = new Date(repair.receivedDate);
         if (repairDate < yearStart || repairDate > yearEnd) {
@@ -140,26 +153,27 @@ console.log('repairDyna 2', repairDyna);
     // Get unique sites/departments from filtered data
     const uniqueValues = new Set<string>();
     filtered.forEach((repair) => {
-		console.log('unique sites/departments');
+		//console.log('unique sites/departments');
       if (viewMode === "sites") {
-		  console.log('unique sites');
+		  //console.log('unique sites');
        // if (repair.site) {
 		if (repair.site || repair.CustomerName) {
-			console.log('repair.CustomerName');
+			//console.log('repair.CustomerName');
           //uniqueValues.add(repair.site);
 		  uniqueValues.add(repair.CustomerName)
         }
       } else {
-		  console.log('unique department');
-        if (repair.department) {
-			console.log('repair.department');
-          uniqueValues.add(repair.department);
+		  //console.log('unique department');
+        if (repair.department || repair.DepartmentName) {
+			//console.log('repair.department');
+          //uniqueValues.add(repair.department);
+		  uniqueValues.add(repair.DepartmentName);
         }
       }
     });
 
     const seriesKeys = Array.from(uniqueValues).sort();
-	console.log('seriesKeys: ' , seriesKeys);
+	//console.log('seriesKeys: ' , seriesKeys);
 
     // Group by month index (0-11) and site/department - count when repairs ENTERED any status
     const monthValueMap = new Map<number, Map<string, number>>();
@@ -184,7 +198,7 @@ console.log('repairDyna 2', repairDyna);
           }
         });
       } else if (repair.receivedDate) { 
-		console.log('repair.receivedDate');
+		//console.log('repair.receivedDate');
         // Fallback: use receivedDate if no statusHistory
         const date = new Date(repair.receivedDate);
         if (date >= yearStart && date <= yearEnd) {
@@ -199,20 +213,20 @@ console.log('repairDyna 2', repairDyna);
           valueMap.set(valueKey, (valueMap.get(valueKey) || 0) + 1);
         }
       } else if (repair.year) { //Jaya BOC
-		console.log('repair.year');
+		//console.log('repair.year');
         // Fallback: use year if no statusHistory and receivedDate
         const year = repair.year;
         if (year >= yearStart.getFullYear() && year <= yearEnd.getFullYear()) {
           const monthIndex = repair.month_number - 1; // 0-11
-		  console.log('monthIndex',monthIndex);
-          const valueKey = viewMode === "sites" ? (repair.CustomerName || "") : (repair.department || "");
-console.log('valueKey: ', valueKey);
+		  //console.log('monthIndex',monthIndex);
+          const valueKey = viewMode === "sites" ? (repair.CustomerName || "") : (repair.DepartmentName || "");
+			//console.log('valueKey: ', valueKey);
           if (!monthValueMap.has(monthIndex)) {
             monthValueMap.set(monthIndex,new Map());
           }
 
           const valueMap = monthValueMap.get(monthIndex)!;
-		  console.log('valueMap: ', valueMap);
+		  //console.log('valueMap: ', valueMap);
           //valueMap.set(valueKey, (valueMap.get(valueKey) || 0) + 1);
 		  valueMap.set(valueKey, (valueMap.get(valueKey) || 0) + repair.totalRR);
         }
@@ -223,16 +237,16 @@ console.log('valueKey: ', valueKey);
 
     // Create data for exactly 12 months (Jan-Dec) using month names only
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    console.log('month name');
+    //console.log('month name');
 	
     const data = monthNames.map((monthName, monthIndex) => {
       const valueMap = monthValueMap.get(monthIndex);
       const entry: Record<string, string | number> = { month: monthName };
-console.log('valueMap: ', valueMap);
-console.log('seriesKeys: ', seriesKeys);
+//console.log('valueMap: ', valueMap);
+//console.log('seriesKeys: ', seriesKeys);
       seriesKeys.forEach((key) => {
         entry[key] = valueMap?.get(key) || 0;
-		console.log('entry[key] : ', entry[key]  );
+		//console.log('entry[key] : ', entry[key]  );
       });
 
       return entry;
