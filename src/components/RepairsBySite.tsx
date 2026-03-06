@@ -69,6 +69,7 @@ export function RepairsBySite({ selectedSites, selectedDepartments }: RepairsByS
         selectedDepartments={selectedDepartments}
         selectedYear={parseInt(selectedYear, 10)}
         viewMode={viewMode}
+		key = {viewMode}
       />
     </section>
   );
