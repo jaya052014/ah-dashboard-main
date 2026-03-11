@@ -34,7 +34,8 @@ type HQDecisionMakersProps = {
 
 
 const AWAITING_STATUS_LABEL: RepairStatus = "Awaiting Approval";
-
+const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+const jsonData = await response.json(); 
 // Helper function to get status summary (count and total amount)
 function getStatusSummary(repairs: AllRepairsRow[], status: RepairStatus): { count: number; totalAmount: number } {
   const filtered = repairs.filter((repair) => repair.status === status);
@@ -80,6 +81,8 @@ function getAllStatusSummaries(repairs: AllRepairsRow[]): Record<RepairStatus, {
 
 // Jaya - BOC
 
+//const [jsonData, setjsonData] = useState<AllRepairsRow[]>(ALL_REPAIRS_DATA);
+
 // Helper function to get all status summaries Dynamically
 async function getAllStatusSummariesDynamic (): Promise<Record<RepairStatus, { count: number; totalAmount: number }>> {
   /*const statuses: RepairStatus[] = [
@@ -103,17 +106,17 @@ async function getAllStatusSummariesDynamic (): Promise<Record<RepairStatus, { c
     "REJECTED",
     "NOT_REPAIRABLE",
   ];
-  
+	
 	try {
-	  const response = await fetch('https://junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+	  //const response = await fetch('https://junoedge.com/api/api/v1.0/dview/CustomerDashboard');
 	  
 	  if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 		
 		        
-		const jsonData = await response.json(); 		
-		var jsonString = JSON.stringify(jsonData, null, 2);
+		//const jsonData = await response.json(); 		
+		//var jsonString = JSON.stringify(jsonData, null, 2);
 		const summaries: Partial<Record<RepairStatus, { count: number; totalAmount: number }>> = {};
 
 		for (const status of statuses) {
@@ -203,8 +206,27 @@ export function HQDecisionMakers({
     // If year data exists, use it; otherwise use 2024 (most recent available)
     return yearData[year] || yearData[2024] || 0;
   };
+  
+  
+    const calculateYTDCostSavingsDyna = (data: number): number => {
+		//console.log(data.responseData.YearToDateStatistics);
+    /*const yearData: Record<number, number> = {
+      2025: 1532818, // Total Cost Savings YTD for 2025
+      2024: 1532818, // total from kpiDataByYearMonth[2024].total.totalCostSavings
+      2023: 1363500,
+      2022: 1305000,
+    };*/
+    
+    // If year data exists, use it; otherwise use 2024 (most recent available)
+    //return yearData[year] || yearData[2024] || 0;
+	
+	return data?.responseData?.YearToDateStatistics[0]?.CostSavings;
+	
+  };
 
-  const ytdCostSavings = useMemo(() => calculateYTDCostSavings(selectedYear), [selectedYear]);
+ // const ytdCostSavings = useMemo(() => calculateYTDCostSavings(selectedYear), [selectedYear]);
+   const ytdCostSavings = useMemo(() => calculateYTDCostSavingsDyna(jsonData));
+  
 
   // Save to localStorage whenever blocksState changes
   // Normalize state before saving (force required blocks visible)
@@ -488,11 +510,18 @@ const statusKpiCards = useMemo(() => {
       return completedDate !== null;
     }).length;
 
-    return {
+    /*return {
       logged: loggedCount,
       approved: approvedCount,
       completed: completedCount,
+    };*/
+	
+	return {
+      logged: jsonData?.responseData?.YearToDateStatistics[0]?.Logged_YTD,
+      approved: jsonData?.responseData?.YearToDateStatistics[0]?.Approved_YTD,
+      completed:  jsonData?.responseData?.YearToDateStatistics[0]?.Completed_YTD,
     };
+	
   }, [allRepairsRows, selectedYear, selectedSites, selectedDepartments]);
 
   // Helper to get days since entering "Awaiting Approval" status
@@ -542,13 +571,21 @@ const statusKpiCards = useMemo(() => {
       return days >= 91;
     });
     
-    return {
+    /*return {
       sevenDaysOrLess: sevenDaysOrLess.length,
       lessThanOneMonth: lessThanOneMonth.length,
       oneToThreeMonths: oneToThreeMonths.length,
       threePlusMonths: threePlusMonths.length,
       // Combined count for "Under 1 month" card row
       underOneMonth: sevenDaysOrLess.length + lessThanOneMonth.length,
+    };*/
+	return {
+      //sevenDaysOrLess: sevenDaysOrLess.length,
+      //lessThanOneMonth: lessThanOneMonth.length,
+      oneToThreeMonths: jsonData?.responseData?.ApprovalOverdue[0]?.One_To_Three_Months,
+      threePlusMonths: jsonData?.responseData?.ApprovalOverdue[0]?.Over_3_Months,
+      // Combined count for "Under 1 month" card row
+      underOneMonth: jsonData?.responseData?.ApprovalOverdue[0]?.Under_One_Month,
     };
   }, [allRepairsRows]);
 
