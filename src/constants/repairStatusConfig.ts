@@ -37,7 +37,7 @@ export const REPAIR_STATUS_CONFIG: Record<RepairStatus, RepairStatusConfig> = {
     iconColor: "#64748b", // Slate-500
   },
   "PO": {
-    label: "PO",
+    label: "Not Repairable",
     IconComponent: DocumentTextIcon,
     badgeBackground: "#e0e7ff", // Indigo tint
     badgeTextColor: "#6366f1", // Indigo-600

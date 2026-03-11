@@ -360,7 +360,7 @@ const ALL_KPI_STATUSES: RepairStatus[] = [
     "In Progress",
     "Completed",
     "Rejected",
-    "Not Repairable",
+    //"Not Repairable",
   ];
   
 // 2. Map the data to your UI Cards
@@ -372,16 +372,18 @@ const statusKpiCards = useMemo(() => {
     "COMPLETED": "Completed",
     "REJECTED": "Rejected",
     "UNDER_EVALUATION": "Awaiting Quote",
-    "PO": "PO",
-    "NOT_REPAIRABLE": "Not Repairable"
+    "NOT_REPAIRABLE": "PO",
+    //"NOT_REPAIRABLE": "Not Repairable"
   };
 
   return ALL_KPI_STATUSES.map((uiStatus) => {
-    // Find which API key corresponds to this UI Label
+	
+	// Find which API key corresponds to this UI Label
     const apiKey = Object.keys(API_TO_UI_MAP).find(key => API_TO_UI_MAP[key] === uiStatus);
     
     // Safety check: lookup the data using the apiKey (e.g., 'LOGGED')
-    const dataForStatus = apiKey ? statusSummaries[apiKey] : null;
+    
+	const dataForStatus = apiKey ? statusSummaries[apiKey] : null;
 
     return {
       status: uiStatus,
@@ -390,6 +392,7 @@ const statusKpiCards = useMemo(() => {
       iconBackgroundColor: REPAIR_STATUS_CONFIG[uiStatus]?.badgeBackground ?? "#eee",
       iconColor: REPAIR_STATUS_CONFIG[uiStatus]?.badgeTextColor ?? "#666",
     };
+	
   });
 }, [statusSummaries]); // This memo now only depends on the final state
 
