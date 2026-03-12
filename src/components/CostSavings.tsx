@@ -22,8 +22,15 @@ const formatCurrency = (value: number): string => {
 // Custom tooltip
 const CustomTooltip = ({ active, payload }: any) => {
 	//console.log('payload: ', payload);
+	
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+	//console.log('data: ', data);
+	const rawValue = data.CostSaving || data.costSaving || data.savings;
+//console.log('rawValue: ', rawValue);
+    // 2. Convert to number and provide a fallback of 0 if it's missing
+    const numericValue = Number(rawValue || 0);
+	//console.log('numericValue: ', numericValue);
 	
     return (
       <div
@@ -43,7 +50,7 @@ const CustomTooltip = ({ active, payload }: any) => {
             marginBottom: "4px",
           }}
         >
-          Year: {data.year}
+          Year: {data.Year}
         </div>
         <div
           style={{
@@ -52,8 +59,8 @@ const CustomTooltip = ({ active, payload }: any) => {
             fontWeight: 600,
           }}
         >
-         // Cost Savings: ${data.savings.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-		 Cost Savings: ${data.CostSaving.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+         
+		 Cost Savings: ${numericValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
         </div>
       </div>
     );
@@ -120,7 +127,7 @@ export function CostSavings() {
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"              
-			  dataKey="CostSaving"
+			  dataKey="CostSaving"			
               stroke="#2563eb"
               strokeWidth={3}
               dot={{ fill: "#2563eb", r: 5 }}
@@ -132,3 +139,5 @@ export function CostSavings() {
     </section>
   );
 }
+
+
