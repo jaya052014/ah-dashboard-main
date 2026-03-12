@@ -7,14 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-
-// Cost savings data by year
-// 2025 value must match Total Cost Savings YTD: $1,532,818
-const COST_SAVINGS_BY_YEAR = [
-  { year: 2023, savings: 1363500 },
-  { year: 2024, savings: 1450000 },
-  { year: 2025, savings: 1532818 },
-];
+import React, { useState, useEffect } from "react";
 
 // Format currency for display
 const formatCurrency = (value: number): string => {
@@ -28,8 +21,10 @@ const formatCurrency = (value: number): string => {
 
 // Custom tooltip
 const CustomTooltip = ({ active, payload }: any) => {
+	//console.log('payload: ', payload);
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+	
     return (
       <div
         style={{
@@ -57,7 +52,8 @@ const CustomTooltip = ({ active, payload }: any) => {
             fontWeight: 600,
           }}
         >
-          Cost Savings: ${data.savings.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+         // Cost Savings: ${data.savings.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+		 Cost Savings: ${data.CostSaving.toLocaleString("en-US", { maximumFractionDigits: 0 })}
         </div>
       </div>
     );
@@ -66,6 +62,29 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export function CostSavings() {
+	
+	const [COST_SAVINGS_BY_YEAR, setChartData] = useState([true]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+        const jsonData = await response.json();
+        // Ensure we are mapping to the correct keys returned by your API
+        setChartData(jsonData?.responseData?.CostSavingsYearWise || []);
+		//console.log('COST_SAVINGS_BY_YEAR: ' , COST_SAVINGS_BY_YEAR);
+      } catch (error) {
+        console.error("Error fetching cost savings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  
   return (
     <section id="cost-savings" className="orders-table-card dashboard-section">
       <div className="repair-trend-analysis-header">
@@ -85,7 +104,7 @@ export function CostSavings() {
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
             <XAxis
-              dataKey="year"
+              dataKey="Year"
               stroke="#64748b"
               fontSize={12}
               tickLine={false}
@@ -100,8 +119,8 @@ export function CostSavings() {
             />
             <Tooltip content={<CustomTooltip />} />
             <Line
-              type="monotone"
-              dataKey="savings"
+              type="monotone"              
+			  dataKey="CostSaving"
               stroke="#2563eb"
               strokeWidth={3}
               dot={{ fill: "#2563eb", r: 5 }}
