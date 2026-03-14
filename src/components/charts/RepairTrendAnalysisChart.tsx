@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -10,7 +10,8 @@ import {
 } from "recharts";
 import { ALL_REPAIRS_DATA } from "../../data/allRepairsData";
 import type { RepairStatus } from "../tables/AllRepairsTable";
-import { REPAIR_STATUS_CONFIG, ALL_STATUSES } from "../../constants/repairStatusConfig";
+//import { REPAIR_STATUS_CONFIG, ALL_STATUSES } from "../../constants/repairStatusConfig";
+import { REPAIR_STATUS_CONFIG, API_STATUSES } from "../../constants/repairStatusConfig";
 
 type RepairTrendAnalysisChartProps = {
   selectedSites: string[];
@@ -20,7 +21,7 @@ type RepairTrendAnalysisChartProps = {
 };
 
 // Status color mapping
-const STATUS_COLORS: Record<RepairStatus, string> = {
+/*const STATUS_COLORS: Record<RepairStatus, string> = {
   "Repair Logged": "#06b6d4", // cyan
   "Awaiting Quote": "#64748b", // grey
   "PO": "#6366f1", // indigo
@@ -29,6 +30,18 @@ const STATUS_COLORS: Record<RepairStatus, string> = {
   "Completed": "#10b981", // green
   "Rejected": "#ef4444", // red
   "Not Repairable": "#f97316", // orange (different shade)
+};*/
+
+
+const STATUS_COLORS: Record<RepairStatus, string> = {
+  "LOGGED": "#06b6d4", // cyan
+  "UNDER_EVALUATION": "#64748b", // grey
+  //"PO": "#6366f1", // indigo
+  "AWAITING_APPROVAL": "#f59e0b", // orange
+  "IN_PROGRESS": "#2563eb", // blue
+  "COMPLETED": "#10b981", // green
+  "REJECTED": "#ef4444", // red
+  "NOT_REPAIRABLE": "#f97316", // orange (different shade)
 };
 
 export function RepairTrendAnalysisChart({
@@ -38,10 +51,14 @@ export function RepairTrendAnalysisChart({
   compareWithPrevious = false,
 }: RepairTrendAnalysisChartProps) {
   // Legend toggle state - all visible by default
-  const [visibleStatuses, setVisibleStatuses] = useState<Set<RepairStatus>>(
+  /*const [visibleStatuses, setVisibleStatuses] = useState<Set<RepairStatus>>(
     new Set(ALL_STATUSES)
-  );
+  );*/
 
+ const [visibleStatuses, setVisibleStatuses] = useState<Set<RepairStatus>>(
+    new Set(API_STATUSES)
+  );
+  
   const toggleStatus = (status: RepairStatus) => {
     setVisibleStatuses((prev) => {
       const next = new Set(prev);
@@ -53,8 +70,36 @@ export function RepairTrendAnalysisChart({
       return next;
     });
   };
-
+  
+  // Jaya - BOC
+  const [repairDyna, setRepair] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+		setRepair(null);
+      setLoading(true);
+      try {
+        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+        const jsonData = await response.json();
+		
+		setRepair(jsonData.responseData['RepairTrendAnalysis']); // Store the result in state
+						
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+  	// Jaya - EOC
   const chartData = useMemo(() => {
+	  
+	  if (!repairDyna || repairDyna.length === 0) {
+	
+	  return {chartData: []};
+		}
     // Calculate year boundaries for selected year
     const yearStart = new Date(selectedYear, 0, 1);
     const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
@@ -67,7 +112,9 @@ export function RepairTrendAnalysisChart({
     // Helper function to process data for a specific year and return counts by month index (0-11)
     const processYearData = (yearStart: Date, yearEnd: Date): Map<number, Map<RepairStatus, number>> => {
       // Filter repairs data based on site, department, and year
-      const filtered = ALL_REPAIRS_DATA.filter((repair: any) => {
+      //const filtered = ALL_REPAIRS_DATA.filter((repair: any) => {
+		  
+		  let filtered = repairDyna.filter((repair: any) => {
         // Site filter
         const hasSiteFilter = selectedSites.length > 0 && !selectedSites.includes("all");
         if (hasSiteFilter) {
@@ -102,7 +149,6 @@ export function RepairTrendAnalysisChart({
             return false;
           }
         }
-
         return true;
       });
 
@@ -110,6 +156,7 @@ export function RepairTrendAnalysisChart({
       const monthStatusMap = new Map<number, Map<RepairStatus, number>>();
       
       filtered.forEach((repair: any) => {
+		
         if (repair.statusHistory && repair.statusHistory.length > 0) {
           // Use statusHistory to find when each status was entered
           repair.statusHistory.forEach((entry: any) => {
@@ -118,7 +165,8 @@ export function RepairTrendAnalysisChart({
             if (entryDate >= yearStart && entryDate <= yearEnd) {
               const monthIndex = entryDate.getMonth(); // 0-11
               const status = entry.status;
-              
+              //const statusMap = monthStatusMap.get(monthIndex)!;
+			  //statusMap.set(status, (statusMap.get(status) || 0) + 1);
               if (!monthStatusMap.has(monthIndex)) {
                 monthStatusMap.set(monthIndex, new Map());
               }
@@ -127,29 +175,38 @@ export function RepairTrendAnalysisChart({
               statusMap.set(status, (statusMap.get(status) || 0) + 1);
             }
           });
-        } else if (repair.receivedDate) {
+        } else if (repair.Year) {
+			const keys = Object.keys(repair);
+			
           // Fallback: use receivedDate and current status if no statusHistory
-          const date = new Date(repair.receivedDate);
+          const date = new Date(repair.Year,0,1);
+		  
           if (date >= yearStart && date <= yearEnd) {
-            const monthIndex = date.getMonth(); // 0-11
-            const status = repair.status as RepairStatus;
+			
+            const monthIndex = repair.Month-1; // 0-11
             
             if (!monthStatusMap.has(monthIndex)) {
               monthStatusMap.set(monthIndex, new Map());
             }
             
             const statusMap = monthStatusMap.get(monthIndex)!;
-            statusMap.set(status, (statusMap.get(status) || 0) + 1);
-          }
-        }
-      });
+            for(let i=2;i<=keys.length;i++) {
+				
+				statusMap.set(keys[i], repair[keys[i]]);
+			}
+			monthStatusMap.set(monthIndex, statusMap);
 
+          }
+        }		
+      });
+	  
+	  
       return monthStatusMap;
     };
 
     // Process current year data
     const currentYearMap = processYearData(yearStart, yearEnd);
-    
+   	
     // Process previous year data if comparison is enabled
     const previousYearMap = compareWithPrevious && previousYearStart && previousYearEnd
       ? processYearData(previousYearStart, previousYearEnd)
@@ -163,28 +220,37 @@ export function RepairTrendAnalysisChart({
       
       // Add current year data
       const currentStatusMap = currentYearMap.get(monthIndex);
-      ALL_STATUSES.forEach((status) => {
+	  
+	  
+     /* ALL_STATUSES.forEach((status) => {
+        entry[status] = currentStatusMap?.get(status) || 0;
+      });*/
+	      API_STATUSES.forEach((status) => {
         entry[status] = currentStatusMap?.get(status) || 0;
       });
       
       // Add previous year data if comparison is enabled
       if (previousYearMap) {
         const previousStatusMap = previousYearMap.get(monthIndex);
-        ALL_STATUSES.forEach((status) => {
+        /*ALL_STATUSES.forEach((status) => {
+          entry[`${status}_prev`] = previousStatusMap?.get(status) || 0;*/
+		  API_STATUSES.forEach((status) => {
           entry[`${status}_prev`] = previousStatusMap?.get(status) || 0;
         });
       }
       
       return entry;
     });
-
+	
     return { data, compareWithPrevious, previousYear };
-  }, [selectedYear, selectedSites, selectedDepartments, compareWithPrevious]);
+  }, [repairDyna, selectedYear, selectedSites, selectedDepartments, compareWithPrevious]);
 
   // Custom tooltip to show only visible statuses
   const CustomTooltip = ({ active, payload, label }: any) => {
+	  
     if (active && payload && payload.length) {
       // Filter to only show visible statuses
+	  
       const visibleStatusesArray = Array.from(visibleStatuses);
       const isComparing = chartData.compareWithPrevious;
       const prevYear = chartData.previousYear;
@@ -257,7 +323,7 @@ export function RepairTrendAnalysisChart({
     return null;
   };
 
-  return (
+  return ( 
     <div style={{ position: "relative", overflow: "visible" }}>
       <div style={{ width: "100%", height: 300, position: "relative", overflow: "visible" }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -286,7 +352,8 @@ export function RepairTrendAnalysisChart({
               cursor={{ stroke: "rgba(37, 99, 235, 0.4)", strokeWidth: 1 }}
               wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
             />
-            {ALL_STATUSES.map((status) => {
+            {//ALL_STATUSES.map((status) => {
+				API_STATUSES.map((status) => {
               if (!visibleStatuses.has(status)) return null;
               const color = STATUS_COLORS[status];
               
@@ -325,7 +392,8 @@ export function RepairTrendAnalysisChart({
       
       {/* Legend */}
       <div className="repair-trend-legend">
-        {ALL_STATUSES.map((status) => {
+        {//ALL_STATUSES.map((status) => {
+			API_STATUSES.map((status) => {
           const isVisible = visibleStatuses.has(status);
           return (
             <button

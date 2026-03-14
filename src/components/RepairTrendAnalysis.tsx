@@ -8,6 +8,7 @@ type RepairTrendAnalysisProps = {
 };
 
 const YEAR_OPTIONS = [
+	{ value: "2026", label: "2026" },
   { value: "2025", label: "2025" },
   { value: "2024", label: "2024" },
   { value: "2023", label: "2023" },
@@ -15,7 +16,8 @@ const YEAR_OPTIONS = [
 ];
 
 export function RepairTrendAnalysis({ selectedSites, selectedDepartments }: RepairTrendAnalysisProps) {
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const [selectedYear, setSelectedYear] = useState<string>("2026");
+  //console.log('year selected: ');
   const [compareWithPrevious, setCompareWithPrevious] = useState<boolean>(false);
 
   return (
