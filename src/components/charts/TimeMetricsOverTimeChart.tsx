@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -28,6 +28,7 @@ const LINE_COLORS = [
   "#ec4899", // pink
 ];
 
+/*
 const METRIC_KEYS = [
   "avgApprovalTime",
   "avgExpectedTime",
@@ -44,6 +45,24 @@ const METRIC_LABELS: Record<string, string> = {
   avgQuoteTime: "Avg. Quote Time",
   avgRepairTime: "Avg. Repair Time",
   variance: "Variance",
+}; */
+
+const METRIC_KEYS = [
+  "AvgApprovalTime",
+  "AvgExpectedTIme",
+  "AvgTurnAroundTIme",
+  "AvgQuoteTime",
+  "AvgRepairTime",
+  "Variance",
+] as const;
+
+const METRIC_LABELS: Record<string, string> = {
+  AvgApprovalTime: "Avg. Approval Time",
+  AvgExpectedTIme: "Avg. Expected Time",
+  AvgTurnAroundTIme: "Avg. Overall Turnaround Time",
+  AvgQuoteTime: "Avg. Quote Time",
+  AvgRepairTime: "Avg. Repair Time",
+  Variance: "Variance",
 };
 
 const MAX_VISIBLE_SERIES = 10;
@@ -59,6 +78,30 @@ export function TimeMetricsOverTimeChart({
   );
   const [hoveredDisabledKey, setHoveredDisabledKey] = useState<string | null>(null);
 
+ // Jaya - BOC
+  const [repairDyna, setRepair] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+		setRepair(null);
+      setLoading(true);
+      try {
+        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+        const jsonData = await response.json();
+		
+		setRepair(jsonData.responseData['TimeMetricsChart']); // Store the result in state
+				//console.log('jsonData: ', jsonData.responseData['TimeMetricsChart']);		
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+  	// Jaya - EOC
+	
   // Deterministic hash function for consistent value generation
   const hashString = (str: string): number => {
     let hash = 0;
@@ -151,13 +194,20 @@ export function TimeMetricsOverTimeChart({
   };
 
   const chartData = useMemo(() => {
+	  
+	   if (!repairDyna || repairDyna.length === 0) {
+	
+	  return {chartData: []};
+		}
+		//console.log('repairDyna: ', repairDyna);
     // Helper function to process data for a specific year
-    const processYearData = (year: number) => {
+   /* const processYearData = (year: number) => {
       const yearStart = new Date(year, 0, 1);
       const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
 
       // Filter data
-      let filtered = ALL_REPAIRS_DATA.filter((row) => {
+     // let filtered = ALL_REPAIRS_DATA.filter((row) => {
+		 let filtered = repairDyna.filter((row: any) => {
       // Filter by year (based on receivedDate)
       // If no receivedDate, include it (might be calculated from statusHistory)
       if (row.receivedDate) {
@@ -407,11 +457,69 @@ export function TimeMetricsOverTimeChart({
         variance: data.avgVariance !== null 
           ? Math.round(addVariation(data.avgVariance, index, 5) * 10) / 10 
           : null,
-      }));
-    };
+      })
+	  );
+    };*/
 
+
+ const processYearData = (year: number) => {
+      const yearStart = new Date(year, 0, 1);
+      const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+ const monthMetricsMap = new Map<number, Map<RepairStatus, number>>();
+		//const timeMetricsOverTimeMap ;
+      // Filter data
+     // let filtered = ALL_REPAIRS_DATA.filter((row) => {
+		 let filtered = repairDyna.filter((repair: any) => {
+			 //console.log('repairDyna: ', repairDyna);
+			 
+			 if (!repair.Year) return false;
+			 
+			 const repairDate = new Date(repair.Year, (repair.Month || 1) - 1, 1);
+    return repairDate >= yearStart && repairDate <= yearEnd;
+  });
+			  filtered.forEach((repair: any) => {
+				  //console.log('repair: ', repair);
+			 if (repair.Year) {
+			const keys = Object.keys(repair);
+			 //console.log('keys: ', keys);
+          // Fallback: use receivedDate and current status if no statusHistory
+          const date = new Date(repair.Year,0,1);
+		  
+          if (date >= yearStart && date <= yearEnd) {
+			
+            const monthIndex = repair.Month-1; // 0-11
+            
+            if (!monthMetricsMap.has(monthIndex)) {
+              monthMetricsMap.set(monthIndex, new Map());
+            }
+            
+            const timeMetricsOverTimeMap = monthMetricsMap.get(monthIndex)!;
+			
+			//console.log('timeMetricsOverTimeMap: ', timeMetricsOverTimeMap);
+			//console.log('monthMetricsMap: ', monthMetricsMap);
+			
+			
+            for(let i=2;i<=keys.length-1;i++) {
+				//console.log('keys[i]:', keys[i]);
+				timeMetricsOverTimeMap.set(keys[i], repair[keys[i]]);
+				//console.log('timeMetricsOverTimeMap: inside for: ', timeMetricsOverTimeMap);
+				
+			}
+			monthMetricsMap.set(monthIndex, timeMetricsOverTimeMap);
+			//console.log('monthMetricsMap: ', monthMetricsMap);
+
+          }
+        }	
+			  });
+			  //console.log('monthMetricsMap: ', monthMetricsMap);
+			  return monthMetricsMap;
+		
+		// });
+	 };
+	 
     // Process current year data
     const currentYearData = processYearData(selectedYear);
+	//console.log('currentYearData: ' , currentYearData);
     
     // Process previous year data if comparison is enabled
     const previousYear = selectedYear - 1;
@@ -424,30 +532,33 @@ export function TimeMetricsOverTimeChart({
     if (!currentYearData || currentYearData.length === 0) {
       return { data: [], compareWithPrevious, previousYear: compareWithPrevious ? previousYear : undefined };
     }
-    
+    //console.log('hi');
     const data = monthNames.map((monthName, monthIndex) => {
-      const currentMonthData = currentYearData[monthIndex];
-      const previousMonthData = previousYearData?.[monthIndex];
-      
+		//console.log('monthIndex: ', monthIndex);
+      const currentMonthData = currentYearData.get(monthIndex);
+	  //console.log('currentMonthData: ', currentMonthData);
+	  
+      const previousMonthData = previousYearData?.get(monthIndex);
+       //console.log('previousMonthData: ', previousMonthData);
       const entry: Record<string, string | number | null> = { month: monthName };
       
       // Add current year metrics
       METRIC_KEYS.forEach((key) => {
-        entry[key] = currentMonthData?.[key] ?? null;
+        entry[key] = currentMonthData?. get(key) ?? null;
       });
       
       // Add previous year metrics if comparison is enabled
       if (compareWithPrevious && previousMonthData) {
         METRIC_KEYS.forEach((key) => {
-          entry[`${key}_prev`] = previousMonthData[key] ?? null;
+          entry[`${key}_prev`] = previousMonthData.get(key) ?? null;
         });
       }
       
       return entry;
     });
-
+//console.log('data: ', data);
     return { data, compareWithPrevious, previousYear: compareWithPrevious ? previousYear : undefined };
-  }, [selectedStatuses, selectedManufacturers, selectedYear, compareWithPrevious]);
+  }, [repairDyna, selectedStatuses, selectedManufacturers, selectedYear, compareWithPrevious]);
 
   const toggleMetric = (metricKey: string) => {
     setVisibleMetrics((prev) => {
@@ -464,7 +575,7 @@ export function TimeMetricsOverTimeChart({
   // Custom tooltip that only shows visible metrics
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || payload.length === 0) return null;
-
+//console.log('payload: ', payload);
     const isComparing = chartData.compareWithPrevious;
     const prevYear = chartData.previousYear;
 
@@ -527,15 +638,15 @@ export function TimeMetricsOverTimeChart({
                 {isComparing && prevValue !== null ? (
                   <>
                     <div style={{ color: "#1e293b", fontWeight: 500 }}>
-                      {selectedYear}: {currentValue !== null ? `${currentValue.toFixed(1)} days` : 'N/A'}
+                      {selectedYear}: {currentValue !== null ? `${Number(currentValue || 0).toFixed(1)} days` : 'N/A'}
                     </div>
                     <div style={{ color: "#64748b", fontSize: 12 }}>
-                      {prevYear}: {prevValue !== null ? `${prevValue.toFixed(1)} days` : 'N/A'}
+                      {prevYear}: {prevValue !== null ? `${Number(prevValue || 0).toFixed(1)} days` : 'N/A'}
                     </div>
                   </>
                 ) : (
                   <div style={{ color: "#1e293b", fontWeight: 500 }}>
-                    {currentValue !== null ? `${currentValue.toFixed(1)} days` : 'N/A'}
+                    {currentValue !== null ? `${Number(currentValue || 0).toFixed(1)} days` : 'N/A'}
                   </div>
                 )}
               </div>
@@ -546,14 +657,26 @@ export function TimeMetricsOverTimeChart({
     );
   };
 
-  const hasData = chartData.data.length > 0 && chartData.data.some((d: any) => 
-    d.avgApprovalTime !== null || 
+let hasData;
+//console.log('chartData: ', chartData);
+if (chartData !== null  && chartData.data)
+{
+	 hasData = chartData.data.length > 0 && chartData.data.some((d: any) => 
+    /*d.avgApprovalTime !== null || 
     d.avgExpectedTime !== null || 
     d.avgOverallTurnaroundTime !== null || 
     d.avgQuoteTime !== null || 
     d.avgRepairTime !== null || 
-    d.variance !== null
+    d.variance !== null*/
+	d.AvgApprovalTime !== null || 
+    d.AvgExpectedTime !== null || 
+    d.AvgOverallTurnaroundTime !== null || 
+    d.AvgQuoteTime !== null || 
+    d.AvgRepairTime !== null || 
+    d.Variance !== null
   );
+}
+  
 
   return (
     <div style={{ position: "relative", overflow: "visible" }}>
