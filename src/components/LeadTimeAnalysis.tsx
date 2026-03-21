@@ -10,6 +10,7 @@ type LeadTimeAnalysisProps = {
 type ViewMode = "sites" | "departments";
 
 const YEAR_OPTIONS = [
+{ value: "2026", label: "2026" },
   { value: "2025", label: "2025" },
   { value: "2024", label: "2024" },
   { value: "2023", label: "2023" },
@@ -18,7 +19,7 @@ const YEAR_OPTIONS = [
 
 export function LeadTimeAnalysis({ selectedSites, selectedDepartments }: LeadTimeAnalysisProps) {
   // Default to 2025
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const [selectedYear, setSelectedYear] = useState<string>("2026");
   const [viewMode, setViewMode] = useState<ViewMode>("sites");
 
   return (
@@ -43,15 +44,7 @@ export function LeadTimeAnalysis({ selectedSites, selectedDepartments }: LeadTim
               >
                 Sites
               </button>
-              <button
-                type="button"
-                className={`repairs-by-site-switcher-button ${
-                  viewMode === "departments" ? "repairs-by-site-switcher-button--active" : ""
-                }`}
-                onClick={() => setViewMode("departments")}
-              >
-                Departments
-              </button>
+              
             </div>
             <AppSelect
               value={selectedYear}

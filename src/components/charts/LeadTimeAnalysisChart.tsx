@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ALL_REPAIRS_DATA } from "../../data/allRepairsData";
 import type { AllRepairsRow } from "../tables/AllRepairsTable";
 
@@ -61,14 +61,25 @@ const calculateTimeMetrics = (row: AllRepairsRow, selectedYear: number, viewMode
       // Use selectedYear as fallback
     }
   }
+  else if (row.Year) {
+    try {
+      const received = new Date(row.Year);
+      if (!isNaN(received.getTime())) {
+        rowYear = received.getFullYear();
+      }
+    } catch (e) {
+      // Use selectedYear as fallback
+    }
+  } 
 
   // Get group key (site or department)
   const groupKey = viewMode === "sites" 
     ? (row.site || "Unknown")
     : (row.department || "Unknown");
 
+//console.log('row: ', row);
   // Create deterministic seeds for each metric based on year + group + metric type
-  const baseSeed = `${rowYear}-${groupKey}`;
+  /*const baseSeed = `${rowYear}-${groupKey}`;
   
   // Generate realistic values with proper ranges
   // Quote Time: 2-24 days (varies by year and site/department)
@@ -90,8 +101,27 @@ const calculateTimeMetrics = (row: AllRepairsRow, selectedYear: number, viewMode
   const overallTurnaroundTime = Math.max(8, baseTurnaround + variation);
   
   // Variance: -10 to +10 days (includes negatives), NOT 0 everywhere
-  const variance = deterministicValue(`${baseSeed}-variance`, -10, 10);
-
+  const variance = deterministicValue(`${baseSeed}-variance`, -10, 10);*/
+  
+  const quoteTime = row.AvgQuoteTime;
+  
+  // Approval Time: 2-8 days (varies by year and site/department)
+  const approvalTime = row.AvgApprovalTime;
+  
+  // Repair Time: 4-24 days (varies by year and site/department) - NOT 0
+  const repairTime = row.AvgRepairTime;
+  
+  // Expected Time: 10-35 days (varies by year and site/department) - NOT stuck at 30
+  const expectedTime = row.AvgExpectedTIme;
+  
+  // Overall Turnaround Time: derived from quote + approval + repair with some variation
+  // Base calculation: quote + approval + repair, then add deterministic variation
+  
+  const overallTurnaroundTime = row.AvgTurnAroundTIme;
+  
+  // Variance: -10 to +10 days (includes negatives), NOT 0 everywhere
+  const variance = row.Variance;
+//console.log('variance: ', variance);
   return {
     quoteTime,
     approvalTime,
@@ -156,16 +186,50 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
 };
 
 export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDepartments, viewMode }: LeadTimeAnalysisChartProps) {
+  
+  // Jaya - BOC
+  const [repairOverAllMetrics, setRepairOverAllMetrics] = useState<any>(null);
+  const [repairDyna, setRepair] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+		setRepair(null);
+      setLoading(true);
+      try {
+        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/CustomerDashboard');
+        const jsonData = await response.json();
+		
+		setRepairOverAllMetrics(jsonData.responseData['TimeMetricsOverall']); // Store the result in state
+		setRepair(jsonData.responseData['TimeMetricsTable']); 
+				console.log('TimeMetricsTable: ', jsonData.responseData['TimeMetricsTable']);		
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+  	// Jaya - EOC
+  
   // Calculate overall averages from filtered data
   const overallAverages = useMemo(() => {
+	  
+	  if (!repairOverAllMetrics || repairOverAllMetrics.length === 0) {
+	
+	  return {overallAverages: []};
+		}
+		
     // Calculate year boundaries
     const yearStart = new Date(selectedYear, 0, 1);
     const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
 
     // Filter data by year and site/department filters
-    const filtered = ALL_REPAIRS_DATA.filter((row) => {
+    //const filtered = ALL_REPAIRS_DATA.filter((row) => {
+		//let filtered = repairOverAllMetrics.filter((row) => {
       // Year filter
-      if (row.receivedDate) {
+      /*if (row.receivedDate) {
         try {
           const received = new Date(row.receivedDate);
           if (isNaN(received.getTime())) return false;
@@ -228,27 +292,93 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
       allVariances.push(metrics.variance);
     });
 
-    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;*/
+let filtered = repairOverAllMetrics.filter((repair: any) => {
+ //console.log('repair: ', repair);
+	if (!repair.Year) return false;
+			 
+			 const repairDate = new Date(repair.Year, (repair.Month || 1) - 1, 1);
+    return repairDate >= yearStart && repairDate <= yearEnd;
+  });
+  
+  // Calculate overall averages from all filtered rows
+    const allQuoteTimes: number[] = [];
+    const allApprovalTimes: number[] = [];
+    const allRepairTimes: number[] = [];
+    const allExpectedTimes: number[] = [];
+    const allOverallTurnaroundTimes: number[] = [];
+    const allVariances: number[] = [];
+  
+  filtered.forEach((repair: any) => {
+				  //console.log('repair: ', repair);
+			 if (repair.Year) {
+			const keys = Object.keys(repair);
+			 //console.log('keys: ', keys);
+          // Fallback: use receivedDate and current status if no statusHistory
+          const date = new Date(repair.Year,0,1);
+		  
+          if (date >= yearStart && date <= yearEnd) {
+			  
+			allQuoteTimes.push(repair.AvgQuoteTime);
+			allApprovalTimes.push(repair.AvgApprovalTime);
+			allRepairTimes.push(repair.AvgRepairTime);
+			allExpectedTimes.push(repair.AvgExpectedTIme);
+			allOverallTurnaroundTimes.push(repair.AvgTurnAroundTIme);
+			allVariances.push(repair.Variance);
+			
+            /*const monthIndex = repair.Month-1; // 0-11
+            
+            if (!monthMetricsMap.has(monthIndex)) {
+              monthMetricsMap.set(monthIndex, new Map());
+            }
+            
+            const timeMetricsOverTimeMap = monthMetricsMap.get(monthIndex)!;
+			
+			//console.log('timeMetricsOverTimeMap: ', timeMetricsOverTimeMap);
+			//console.log('monthMetricsMap: ', monthMetricsMap);
+			
+			
+            for(let i=2;i<=keys.length-1;i++) {
+				//console.log('keys[i]:', keys[i]);
+				timeMetricsOverTimeMap.set(keys[i], repair[keys[i]]);
+				//console.log('timeMetricsOverTimeMap: inside for: ', timeMetricsOverTimeMap);
+				
+			}
+			monthMetricsMap.set(monthIndex, timeMetricsOverTimeMap);*/
+			//console.log('monthMetricsMap: ', monthMetricsMap);
+
+          }
+        }	
+			  });
+
 
     return {
-      overallTurnaroundTime: avg(allOverallTurnaroundTimes),
-      quoteTime: avg(allQuoteTimes),
-      approvalTime: avg(allApprovalTimes),
-      repairTime: avg(allRepairTimes),
-      expectedTime: avg(allExpectedTimes),
-      variance: avg(allVariances),
+      overallTurnaroundTime: allOverallTurnaroundTimes,
+      quoteTime: allQuoteTimes,
+      approvalTime: allApprovalTimes,
+      repairTime: allRepairTimes,
+      expectedTime: allExpectedTimes,
+      variance: allVariances,
     };
-  }, [selectedYear, selectedSites, selectedDepartments, viewMode]);
+  }, [selectedYear, selectedSites, selectedDepartments, viewMode, repairOverAllMetrics]);
 
   const heatmapData = useMemo(() => {
     // Calculate year boundaries
     const yearStart = new Date(selectedYear, 0, 1);
     const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
-
+	
+	console.log('repairDyna: ', repairDyna);
+	 if (!repairDyna || repairDyna.length === 0) {
+	
+//console.log('repairDyna 2', repairDyna);	
+		  return { heatmapData: [] };
+		}
+		
     // Filter data by year and site/department filters
-    const filtered = ALL_REPAIRS_DATA.filter((row) => {
+    //const filtered = ALL_REPAIRS_DATA.filter((row) => {
+		const filtered = repairDyna.filter((row) => {
       // Year filter
-      if (row.receivedDate) {
+     /*if (row.receivedDate) {
         try {
           const received = new Date(row.receivedDate);
           if (isNaN(received.getTime())) return false;
@@ -268,12 +398,19 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
         }
       } else {
         return false;
-      }
+      }*/
+	  
+	  const rowYear = typeof row.Year === 'number' 
+      ? row.Year 
+      : new Date(row.Year).getFullYear();
+    
+    return rowYear === selectedYear;
 
       // Site filter (applies regardless of viewMode)
       const hasSiteFilter = selectedSites.length > 0 && !selectedSites.includes("all");
       if (hasSiteFilter) {
-        const rowSite = row.site || "";
+       // const rowSite = row.site || "";
+	    const rowSite = row.CustomerName || "";
         if (!selectedSites.includes(rowSite)) {
           return false;
         }
@@ -301,9 +438,10 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
       variances: number[];
     }>();
 
+
     filtered.forEach((row) => {
       const groupKey = viewMode === "sites" 
-        ? (row.site || "Unknown")
+        ? (row.CustomerName || "Unknown")
         : (row.department || "Unknown");
       const metrics = calculateTimeMetrics(row, selectedYear, viewMode);
       
@@ -321,12 +459,13 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
       }
 
       const groupData = groupMap.get(groupKey)!;
-      if (metrics.quoteTime !== null) groupData.quoteTimes.push(metrics.quoteTime);
-      if (metrics.approvalTime !== null) groupData.approvalTimes.push(metrics.approvalTime);
-      if (metrics.repairTime !== null) groupData.repairTimes.push(metrics.repairTime);
-      if (metrics.expectedTime !== null) groupData.expectedTimes.push(metrics.expectedTime);
-      if (metrics.overallTurnaroundTime !== null) groupData.overallTurnaroundTimes.push(metrics.overallTurnaroundTime);
-      if (metrics.variance !== null) groupData.variances.push(metrics.variance);
+	  
+      if (metrics.quoteTime !== null) groupData.quoteTimes.push(parseFloat(metrics.quoteTime));
+      if (metrics.approvalTime !== null) groupData.approvalTimes.push(parseFloat(metrics.approvalTime));
+      if (metrics.repairTime !== null) groupData.repairTimes.push(parseFloat(metrics.repairTime));
+      if (metrics.expectedTime !== null) groupData.expectedTimes.push(parseFloat(metrics.expectedTime));
+      if (metrics.overallTurnaroundTime !== null) groupData.overallTurnaroundTimes.push(parseFloat(metrics.overallTurnaroundTime));
+      if (metrics.variance !== null) groupData.variances.push(parseFloat(metrics.variance));
     });
 
     // Calculate averages per group
@@ -340,7 +479,7 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
         repairTime: avg(data.repairTimes),
         expectedTime: avg(data.expectedTimes),
         overallTurnaroundTime: avg(data.overallTurnaroundTimes),
-        variance: avg(data.variances),
+		variance: avg(data.variances),
       };
     });
 
@@ -371,7 +510,7 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
         totalBeforeFilter: groupAverages.length,
       };
     }
-  }, [selectedYear, selectedSites, selectedDepartments, viewMode]);
+  }, [selectedYear, selectedSites, selectedDepartments, viewMode, repairDyna]);
 
   // Fixed scale for legend: 0-60 days
   const overallMin = HEATMAP_MIN;
@@ -537,7 +676,7 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
             </tr>
           </thead>
           <tbody>
-            {heatmapData.groupAverages.length === 0 ? (
+            {heatmapData?.groupAverages?.length === 0 ? (
               <tr>
                 <td
                   colSpan={METRIC_COLUMNS.length + 1}
@@ -558,7 +697,7 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
                 </td>
               </tr>
             ) : (
-              heatmapData.groupAverages.map((groupData) => (
+              heatmapData?.groupAverages?.map((groupData) => (
                 <tr key={groupData.groupKey}>
                   <td
                     style={{
@@ -576,6 +715,7 @@ export function LeadTimeAnalysisChart({ selectedYear, selectedSites, selectedDep
                   </td>
                   {METRIC_COLUMNS.map((col) => {
                     const value = groupData[col.key as keyof typeof groupData] as number;
+					
                     // Use fixed 0-60 scale for all metrics
                     const color = getColorForValue(value);
                     const displayValue = isNaN(value) || !isFinite(value) ? "—" : value.toFixed(1);
