@@ -620,7 +620,7 @@ const generateHistoricalDataForYear = (year: number, startRrCounter: number): Al
 		setRepair(null);
       setLoading(true);
       try {*/
-        const response = await fetch('https://staging.junoedge.com/api/v1.0/dview/RRListClientSide');
+        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/RRListClientSide');
 		//const response = await fetch('http://localhost:3000/api/v1.0/dview/RRListClientSide');
         const jsonData = await response.json();
 		
