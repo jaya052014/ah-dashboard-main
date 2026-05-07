@@ -623,7 +623,7 @@ const generateHistoricalDataForYear = (year: number, startRrCounter: number): Al
         const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/RRListClientSide');
 		//const response = await fetch('http://localhost:3000/api/v1.0/dview/RRListClientSide');
         const jsonData = await response.json();
-		
+		console.log('json: ', jsonData);
 		/*setRepair(jsonData.responseData); // Store the result in state
 				//console.log('jsonData: ', jsonData.responseData['TimeMetricsChart']);		
       } catch (error) {
@@ -640,7 +640,7 @@ const generateRepairsDataDyna = (): AllRepairsRow[] => {
   const data: AllRepairsRow[] = [];
     //console.log('jsonData: ', jsonData);
   //console.log('jsonData.length: ', jsonData.responseData.length);
-  /*for (let i = 0; i<jsonData.responseData.length -1; i ++)
+  for (let i = 0; i<jsonData.responseData.length -1; i ++)
 	 
   {
 	  data.push({
@@ -663,9 +663,9 @@ const generateRepairsDataDyna = (): AllRepairsRow[] => {
           //department: getDepartmentForIndex(i, statusTotals[status]),
           //statusHistory,
         });
-  }*/
+  }
         
-//console.log('data: ', data);
+//console.log('all repairs data: ', data);
   return data;
 };
 
