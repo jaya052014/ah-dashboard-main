@@ -611,12 +611,71 @@ const generateHistoricalDataForYear = (year: number, startRrCounter: number): Al
   return data;
 };
 
-const generateRepairsData = (): AllRepairsRow[] => {
-  const currentYearData = generateRepairsDataForCurrentYear();
-  const historical2024 = generateHistoricalDataForYear(2024, 40000);
-  const historical2023 = generateHistoricalDataForYear(2023, 30000);
+// Jaya - BOC
+ /* const [repairDyna, setRepair] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
-  return [...historical2023, ...historical2024, ...currentYearData];
+  useEffect(() => {
+    const fetchData = async () => {
+		setRepair(null);
+      setLoading(true);
+      try {*/
+        const response = await fetch('https://staging.junoedge.com/api/v1.0/dview/RRListClientSide');
+		//const response = await fetch('http://localhost:3000/api/v1.0/dview/RRListClientSide');
+        const jsonData = await response.json();
+		
+		/*setRepair(jsonData.responseData); // Store the result in state
+				//console.log('jsonData: ', jsonData.responseData['TimeMetricsChart']);		
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);*/
+  	// Jaya - EOC
+const generateRepairsDataDyna = (): AllRepairsRow[] => {
+
+  const data: AllRepairsRow[] = [];
+    //console.log('jsonData: ', jsonData);
+  //console.log('jsonData.length: ', jsonData.responseData.length);
+  /*for (let i = 0; i<jsonData.responseData.length -1; i ++)
+	 
+  {
+	  data.push({
+          rrNumber: jsonData?.responseData[i].RRNo,
+          description: jsonData?.responseData[i].RRDescription,
+          //details: `${manufacturers[i % manufacturers.length]} • ${companies[i % companies.length]}`,
+		   details: jsonData?.responseData[i].Manufacturer,
+          //mfrPart: `PART-${year}-${1000 + i}-${status.substring(0, 3).toUpperCase()}`,
+		  mfrPart: jsonData?.responseData[i].ManufacturerPartNo,
+          //customerPartNumber: generateCustomerPartNumber(i, year),
+		  customerPartNumber: jsonData?.responseData[i].CustomerPartNo1,
+          status: jsonData?.responseData[i].RRStatus,
+          daysInProgress: jsonData?.responseData[i].DaysInProgress,
+          daysInProgressDisplay: jsonData?.responseData[i].DaysInProgress,
+          eta: jsonData?.responseData[i].ETA,
+         // quote: 500 + (i * 75) + (Math.floor(i / 10) * 250), // Varied quote values: base 500, increment by 75, plus periodic bumps
+           quote:jsonData?.responseData[i].RepairPrice,
+		 // receivedDate: actualReceivedDateStr,
+         // site: getSiteForIndex(i, statusTotals[status]),
+          //department: getDepartmentForIndex(i, statusTotals[status]),
+          //statusHistory,
+        });
+  }*/
+        
+//console.log('data: ', data);
+  return data;
+};
+
+
+const generateRepairsData = (): AllRepairsRow[] => {
+  const currentYearData = generateRepairsDataDyna();// generateRepairsDataForCurrentYear();
+  //const historical2024 = generateHistoricalDataForYear(2024, 40000);
+  //const historical2023 = generateHistoricalDataForYear(2023, 30000);
+  
+  return [...currentYearData];
 };
 
 export const ALL_REPAIRS_DATA: AllRepairsRow[] = generateRepairsData();
