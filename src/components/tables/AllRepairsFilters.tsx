@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDownIcon, TableCellsIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import type { RepairStatus, DayRangeKey } from "./AllRepairsTable";
-import { REPAIR_STATUS_CONFIG, ALL_STATUSES } from "../../constants/repairStatusConfig";
+//import { REPAIR_STATUS_CONFIG, ALL_STATUSES } from "../../constants/repairStatusConfig";
+import { REPAIR_STATUS_CONFIG, FILTER_STATUSES } from "../../constants/repairStatusConfig";
 
 type AllRepairsFiltersProps = {
   selectedStatuses: RepairStatus[];
@@ -22,7 +23,7 @@ type AllRepairsFiltersProps = {
 
 const STATUS_FILTER_OPTIONS: Array<{ label: string; value: RepairStatus | "ALL" }> = [
   { label: "All Statuses", value: "ALL" },
-  ...ALL_STATUSES.map((status) => ({
+  ...FILTER_STATUSES.map((status) => ({
     label: REPAIR_STATUS_CONFIG[status].label,
     value: status,
   })),
@@ -38,13 +39,15 @@ const DAY_FILTER_OPTIONS: Array<{ label: string; value: DayRangeKey }> = [
 
 const STATUS_LABEL_MAP: Record<RepairStatus, string> = {
   "Repair Logged": REPAIR_STATUS_CONFIG["Repair Logged"].label,
+  //"LOGGED": REPAIR_STATUS_CONFIG["LOGGED"].label,
   "Awaiting Quote": REPAIR_STATUS_CONFIG["Awaiting Quote"].label,
   "PO": REPAIR_STATUS_CONFIG["PO"].label,
   "Awaiting Approval": REPAIR_STATUS_CONFIG["Awaiting Approval"].label,
   "In Progress": REPAIR_STATUS_CONFIG["In Progress"].label,
   "Completed": REPAIR_STATUS_CONFIG["Completed"].label,
   "Rejected": REPAIR_STATUS_CONFIG["Rejected"].label,
-  "Not Repairable": REPAIR_STATUS_CONFIG["Not Repairable"].label,
+  "Not Repairable": REPAIR_STATUS_CONFIG["Not Repairable"].label, 
+  
 };
 
 const DAY_RANGE_LABEL_MAP: Record<Exclude<DayRangeKey, "ALL">, string> = {
@@ -172,7 +175,9 @@ export function AllRepairsFilters({
   };
 
   const handleApplyStatus = () => {
+	  //console.log("hi handleApplyStatus: ");
     const selections = localStatusSelections.filter((s) => s !== "ALL");
+	//console.log("selections: ", selections);
     if (selections.length === 0 || localStatusSelections.includes("ALL")) {
       onStatusesChange([]);
     } else {
@@ -228,6 +233,7 @@ export function AllRepairsFilters({
 
   const getFilteredStatusOptions = () => {
     const search = dropdownSearch.status || "";
+	console.log("search: ", search);
     if (!search.trim()) return STATUS_FILTER_OPTIONS;
     const lowerSearch = search.toLowerCase();
     return STATUS_FILTER_OPTIONS.filter((opt) =>
@@ -269,6 +275,7 @@ export function AllRepairsFilters({
   const handleApplyFiltersPopup = () => {
     // Apply all local selections
     const statusSelections = localPopupStatusSelections.filter((s) => s !== "ALL");
+	console.log('statusSelections: ', statusSelections);
     if (statusSelections.length === 0 || localPopupStatusSelections.includes("ALL")) {
       onStatusesChange([]);
     } else {
@@ -496,7 +503,9 @@ export function AllRepairsFilters({
                   />
                 </div>
                 <div className="all-orders-filter-dropdown-list">
-                  {getFilteredStatusOptions().map((option) => {
+                  {
+					  getFilteredStatusOptions().map((option) => { 
+				  
                     const isSelected = localStatusSelections.includes(option.value);
                     return (
                       <label
