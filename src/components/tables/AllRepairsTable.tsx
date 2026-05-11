@@ -27,6 +27,7 @@ export type AllRepairsRow = {
   mfrPart: string;
   customerPartNumber?: string; // Customer part number (e.g., "GM-CP-48291")
   status: RepairStatus;
+  
   daysInProgress: number; // numeric value for filtering
   daysInProgressDisplay: string; // e.g. "7d" for display
   eta: string; // e.g. "Dec 26"
@@ -102,6 +103,7 @@ export function AllRepairsTable({
     if (!searchQuery.trim()) return data;
 
     const query = searchQuery.toLowerCase();
+	console.log('query: ', query);
     return data.filter(
       (row) =>
         row.rrNumber.toLowerCase().includes(query) ||
@@ -172,11 +174,18 @@ export function AllRepairsTable({
 
   // Pagination
   const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+  console.log("totalPages: ", totalPages);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const paginatedData = sortedData.slice(startIndex, endIndex);
 
   // Reset to page 1 when search, sort, or rows per page changes
+  useEffect(() => {
+	  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(totalPages);
+	  }
+  }, [totalPages, currentPage]);
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortField, sortDirection, rowsPerPage]);
@@ -395,7 +404,9 @@ export function AllRepairsTable({
                 />
               </div>
             </div>
-            {totalPages > 1 && (
+            {
+				//console.log("totalPages: 1:  ", totalPages);
+				totalPages > 1 && (
               <>
                 <button
                   type="button"
