@@ -353,10 +353,14 @@ useEffect(() => {
 }, [allRepairsRows, dynamicStatus]);
 
 const ALL_KPI_STATUSES: RepairStatus[] = [
-    "Repair Logged",
-    "Awaiting Quote",
-    "PO",
-    "Awaiting Approval",
+    //"Repair Logged",
+	"Logged",
+    //"Awaiting Quote",
+	"Under Evaluation",
+    //"PO",
+	"Not Repairable",
+    //"Awaiting Approval",
+	"Awaiting approval",
     "In Progress",
     "Completed",
     "Rejected",
@@ -366,14 +370,18 @@ const ALL_KPI_STATUSES: RepairStatus[] = [
 // 2. Map the data to your UI Cards
 const statusKpiCards = useMemo(() => {
   const API_TO_UI_MAP: Record<string, string> = {
-    "LOGGED": "Repair Logged",
-    "AWAITING_APPROVAL": "Awaiting Approval",
+    //"LOGGED": "Repair Logged",
+	"LOGGED": "Logged",
+    //"AWAITING_APPROVAL": "Awaiting Approval",
+	"AWAITING_APPROVAL": "Awaiting approval",
     "IN_PROGRESS": "In Progress",
     "COMPLETED": "Completed",
     "REJECTED": "Rejected",
-    "UNDER_EVALUATION": "Awaiting Quote",
-    "NOT_REPAIRABLE": "PO",
-    //"NOT_REPAIRABLE": "Not Repairable"
+    //"UNDER_EVALUATION": "Awaiting Quote",
+	"UNDER_EVALUATION": "Under Evaluation",
+   // "NOT_REPAIRABLE": "PO",
+	//"NOT_REPAIRABLE": "Warranty Recapture",
+    "NOT_REPAIRABLE": "Not Repairable"
   };
 
   return ALL_KPI_STATUSES.map((uiStatus) => {
@@ -1039,7 +1047,8 @@ const statusKpiCards = useMemo(() => {
                   <div className="dashboard-kpis-column">
                     <div className="dashboard-kpi-grid-3x2">
                       {statusKpiCards.map((card) => {
-                        const IconComponent = card.IconComponent;
+                        const IconComponent = card.IconComponent; 
+						console.log("card.status: ", card.status);
                         return (
                           <KpiCard
                             key={card.status}
