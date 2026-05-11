@@ -131,6 +131,29 @@ export const REPAIR_STATUS_CONFIG: Record<RepairStatus, RepairStatusConfig> = {
     badgeTextColor: "#9333ea", // Purple-600
     iconColor: "#a855f7", // Purple-500
   },
+  //Filter Status
+  "Logged": {
+    label: "Logged",
+    IconComponent: ClipboardDocumentIcon,
+    badgeBackground: "#e0f2fe", // Cyan tint
+    badgeTextColor: "#0891b2", // Cyan-600
+    iconColor: "#06b6d4", // Cyan-500
+  },
+  "Under Evaluation": {
+    label: "Under Evaluation",
+    IconComponent: ClockIcon,
+    badgeBackground: "#f1f5f9", // Neutral gray-blue tint
+    badgeTextColor: "#475569", // Slate-600
+    iconColor: "#64748b", // Slate-500
+  },
+   "Awaiting approval": {
+    label: "Awaiting Approval",
+    IconComponent: InboxArrowDownIcon,
+    badgeBackground: "#fef3c7", // Amber/orange tint
+    badgeTextColor: "#d97706", // Amber-600
+    iconColor: "#f59e0b", // Amber-500
+  },
+  
 };
 
 // All statuses (8 total) - ordered by lifecycle
@@ -143,6 +166,16 @@ export const ALL_STATUSES: RepairStatus[] = [
   "Completed",
   "Rejected",
   "Not Repairable",
+];
+
+export const FILTER_STATUSES: RepairStatus[] = [
+  "Logged",
+  "Under Evaluation",
+  "Not Repairable",
+  "Awaiting approval",
+  "In Progress",
+  "Completed",
+  "Rejected",  
 ];
 
 // KPI statuses only (6 total, excludes "Logged")
