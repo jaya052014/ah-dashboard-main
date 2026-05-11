@@ -233,7 +233,7 @@ export function AllRepairsFilters({
 
   const getFilteredStatusOptions = () => {
     const search = dropdownSearch.status || "";
-	console.log("search: ", search);
+	//console.log("search: ", search);
     if (!search.trim()) return STATUS_FILTER_OPTIONS;
     const lowerSearch = search.toLowerCase();
     return STATUS_FILTER_OPTIONS.filter((opt) =>
