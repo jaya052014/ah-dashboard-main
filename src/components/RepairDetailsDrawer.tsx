@@ -611,11 +611,11 @@ console.log("repair: 315 ", repair);
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Bill To</div>
-                    <div className="repair-details-meta-value">{rrInfo.BillToSuiteOrApt},{rrInfo.BillToStreetAddress},{rrInfo.BillToCity},{rrInfo.BillToState},{rrInfo.BillToCountry},{rrInfo.BillToZip},{rrInfo.BillToPhoneNoPrimary}</div>
+                    <div className="repair-details-meta-value">abc-abc-abc</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Ship To</div>
-                    <div className="repair-details-meta-value">{rrInfo.ShipToSuiteOrApt},{rrInfo.ShipToStreetAddress},{rrInfo.ShipToCity},{rrInfo.ShipToState},{rrInfo.ShipToCountry},{rrInfo.ShipToZip},{rrInfo.ShipToPhoneNoPrimary}</div>
+                    <div className="repair-details-meta-value">abc-abc-abc</div>
                   </div>
                 </div>
               </div>
