@@ -177,13 +177,25 @@ const DEMO_ATTACHMENTS: string[] = [
 ];
 
 // Get attachments - returns real attachments if available, otherwise demo images
-const getAttachments = (_repair: AllRepairsRow | null): string[] => {
+const getAttachments = (_repair: AllRepairsRow | null, apiAttachments: any[] | null): string[] => {
   // TODO: Replace with real attachments from repair data when available
   // When real attachments are provided, use: _repair.attachments?.length > 0 ? _repair.attachments : DEMO_ATTACHMENTS
   
   // For now, always return demo images as fallback
   // This ensures the gallery always shows images until real attachments are wired
-  return DEMO_ATTACHMENTS;
+  //return DEMO_ATTACHMENTS;
+  /*rrImages: string[];
+  rrAttachments.forEach((rrImage) => {
+	  rrImages.Add(rrImage.ImagePath);
+  }
+  
+  return rrImages;*/
+  console.log('apiAttachments.length: ', apiAttachments?.length);
+  if (!apiAttachments || apiAttachments.length === 0) {
+    return DEMO_ATTACHMENTS;
+  }
+  return apiAttachments.map((attachment) => attachment.ImagePath);
+  
 };
 
 
@@ -273,7 +285,7 @@ const getDaysInProgressColor = (days: number): {
 
 export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }: RepairDetailsDrawerProps) {
   const statusHistory = getStatusHistory(repair);
-  const attachmentImages = getAttachments(repair);
+  
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [customerReferences, setCustomerReferences] = useState<CustomerReference[]>(INITIAL_CUSTOMER_REFERENCES);
@@ -283,6 +295,9 @@ export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }:
   const [note, setNote] = useState<string>("");
 
 const [rrInfo, setRRInfo] = useState<any>(null);
+const [rrAttachments, setRRAttachments] = useState<any>(null);
+
+
   // Handle ESC key
   useEffect(() => {
 	  
@@ -309,6 +324,7 @@ console.log("repair: 315 ", repair);
 		  const jsonData = await response.json();
           console.log("jsonData: ", jsonData);
 		  setRRInfo(jsonData?.responseData?.['RRInfo'][0]);
+		  setRRAttachments(jsonData?.responseData?.['RRImages']);
 		  //console.log("RRInfo: 319: ", rrInfo);
           // Update your state with jsonData here
         } catch (error) {
@@ -329,7 +345,7 @@ console.log("repair: 315 ", repair);
       return () => document.removeEventListener("keydown", handleEsc);
     }
   }, [isOpen, onClose, repair]);
-
+const attachmentImages = getAttachments(repair, rrAttachments);
   if (!isOpen || !repair) {
     return null;
   }
