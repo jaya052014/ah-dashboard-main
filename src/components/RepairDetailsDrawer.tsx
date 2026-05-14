@@ -588,25 +588,25 @@ console.log("repair: 315 ", repair);
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Machine/Asset</div>
-                    <div className="repair-details-meta-value">—</div>
+                    <div className="repair-details-meta-value">{rrInfo?.PartNo}</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Customer Stated Issue</div>
-                    <div className="repair-details-meta-value">Locked up</div>
+                    <div className="repair-details-meta-value">{rrInfo?.StatedIssue}</div>
                   </div>
                 </div>
                 <div className="repair-details-request-details-column">
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Description</div>
-                    <div className="repair-details-meta-value">Repair of Waukesha Positive Displacement Pump, PN: U1015</div>
+                    <div className="repair-details-meta-value">{rrInfo?.RRDescription}</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Bill To</div>
-                    <div className="repair-details-meta-value">Door 16, 1001 Texas Central Parkway, Waco, Texas, USA, 76712, 8888888888</div>
+                    <div className="repair-details-meta-value">{rrInfo?.BillToSuiteOrApt},{rrInfo?.BillToStreetAddress},{rrInfo?.BillToCity},{rrInfo?.BillToState},{rrInfo?.BillToCountry},{rrInfo?.BillToZip},{rrInfo?.BillToPhoneNoPrimary}</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Ship To</div>
-                    <div className="repair-details-meta-value">Door 16, 1001 Texas Central Parkway, Waco, Texas, USA, 76712, 8888888888</div>
+                    <div className="repair-details-meta-value">{rrInfo?.ShipToSuiteOrApt},{rrInfo?.ShipToStreetAddress},{rrInfo?.ShipToCity},{rrInfo?.ShipToState},{rrInfo?.ShipToCountry},{rrInfo?.ShipToZip},{rrInfo?.ShipToPhoneNoPrimary}</div>
                   </div>
                 </div>
               </div>
