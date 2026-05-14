@@ -54,8 +54,6 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-
-    	
 // Generate complete status history with progression
 // Only shows statuses that have been reached, plus the current one
 // Only shows Rejected/Not Repairable if that's the actual current status
@@ -274,12 +272,6 @@ const getDaysInProgressColor = (days: number): {
 };
 
 export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }: RepairDetailsDrawerProps) {
-	
-	
-	
-	
-	//console.log("repair.rrNumber: ", repair.rrNumber);//, repair? repair.rrNumber);
-	
   const statusHistory = getStatusHistory(repair);
   const attachmentImages = getAttachments(repair);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
@@ -290,43 +282,8 @@ export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }:
   const workScopeItems = INITIAL_WORK_SCOPE_ITEMS;
   const [note, setNote] = useState<string>("");
 
-const [rrInfo, setRRInfo] = useState<any>(null);
   // Handle ESC key
   useEffect(() => {
-	  
-	  const fetchData = async () => {
-      if (repair?.rrNumber) {
-        try {
-			
-		let	rrNumber = repair.rrNumber.replace(/\D/g, "");
-		console.log("rrNumber: ", rrNumber);
-          //const response = await fetch(`http://localhost:3000/api/v1.0/dview/CustomerRRView/${rrNumber}`); // to use complete staging url
-		  const response = await fetch(`https://staging.junoedge.com/api/api/v1.0/dview/CustomerRRView/${rrNumber}`);
-          //console.log("response.text(): ", response.text());
-		  
-		  // Check if it's actually JSON before parsing
-/*const contentType = response.headers.get("content-type");
-if (contentType && contentType.indexOf("application/json") !== -1) {
-    const data = await response.json();
-    console.log(data);
-} else {
-    const text = await response.text(); // Get the HTML text
-    console.error("Received HTML instead of JSON. Preview:", text.substring(0, 200));
-}*/
-console.log("repair: 315 ", repair);
-		  const jsonData = await response.json();
-          console.log("jsonData: ", jsonData);
-		  setRRInfo(jsonData?.responseData?.['RRInfo'][0]);
-		  //console.log("RRInfo: 319: ", rrInfo);
-          // Update your state with jsonData here
-        } catch (error) {
-          console.error("Fetch error:", error);
-        }
-      }
-    };
-
-    fetchData();
-	
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
         onClose();
@@ -336,26 +293,16 @@ console.log("repair: 315 ", repair);
       document.addEventListener("keydown", handleEsc);
       return () => document.removeEventListener("keydown", handleEsc);
     }
-  }, [isOpen, onClose, repair]);
-
+  }, [isOpen, onClose]);
 
   if (!isOpen || !repair) {
     return null;
   }
 
   // Mock quote data - in production, this would come from the repair object or API
-  //const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-  console.log("repair: ", repair);
-  console.log("rrInfo: ", rrInfo);
-  //console.log("rrInfo?.CreatedDate: ", rrInfo?.BillToCity);
-  const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(rrInfo?.CreatedDate);
-  
-  const numericQuote = parseFloat(String(repair.quote).replace(/[^0-9.]/g, "")) || 0;
-  
-  console.log('numericQuote: ', numericQuote > 0);
-  const hasQuote = numericQuote > 0 && quoteDate !== null;
-  console.log('hasQuote: ', hasQuote);
-  const workScope = numericQuote > 0 
+  const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  const hasQuote = repair.quote > 0 && quoteDate !== null;
+  const workScope = repair.quote > 0 
     ? "Complete disassembly, cleaning, and inspection of all components. Replacement of worn seals and bearings. Recalibration of pressure sensors and testing of all safety systems. Full functional testing and certification."
     : null;
 
@@ -462,7 +409,7 @@ console.log("repair: 315 ", repair);
                 <div className="repair-details-quote-summary-field repair-details-quote-summary-field--price">
                   <div className="repair-details-quote-summary-label">Repair Price</div>
                   <div className="repair-details-quote-summary-value repair-details-quote-summary-value--price">
-                    {hasQuote ? formatCurrency(numericQuote) : "—"}
+                    {hasQuote ? formatCurrency(repair.quote) : "—"}
                   </div>
                 </div>
               </div>
@@ -593,29 +540,29 @@ console.log("repair: 315 ", repair);
                 <div className="repair-details-request-details-column">
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Department</div>
-                    <div className="repair-details-meta-value">{rrInfo.CustomerDepartmentName}</div>
+                    <div className="repair-details-meta-value">—</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Machine/Asset</div>
-                    <div className="repair-details-meta-value">{rrInfo.PartNo}</div>
+                    <div className="repair-details-meta-value">—</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Customer Stated Issue</div>
-                    <div className="repair-details-meta-value">{rrInfo.StatedIssue}</div>
+                    <div className="repair-details-meta-value">Locked up</div>
                   </div>
                 </div>
                 <div className="repair-details-request-details-column">
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Description</div>
-                    <div className="repair-details-meta-value">{rrInfo.RRDescription}</div>
+                    <div className="repair-details-meta-value">Repair of Waukesha Positive Displacement Pump, PN: U1015</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Bill To</div>
-                    <div className="repair-details-meta-value">abc-abc-abc</div>
+                    <div className="repair-details-meta-value">Door 16, 1001 Texas Central Parkway, Waco, Texas, USA, 76712, 8888888888</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Ship To</div>
-                    <div className="repair-details-meta-value">abc-abc-abc</div>
+                    <div className="repair-details-meta-value">Door 16, 1001 Texas Central Parkway, Waco, Texas, USA, 76712, 8888888888</div>
                   </div>
                 </div>
               </div>
@@ -755,7 +702,7 @@ console.log("repair: 315 ", repair);
           isOpen={isApproveModalOpen}
           onClose={() => setIsApproveModalOpen(false)}
           onSubmit={handleApproveSubmit}
-          quoteAmount={numericQuote}
+          quoteAmount={repair.quote}
         />
       )}
 
