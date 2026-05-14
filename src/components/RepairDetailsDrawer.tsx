@@ -335,9 +335,18 @@ console.log("repair: 315 ", repair);
   }
 
   // Mock quote data - in production, this would come from the repair object or API
-  const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-  const hasQuote = repair.quote > 0 && quoteDate !== null;
-  const workScope = repair.quote > 0 
+  //const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  console.log("repair: ", repair);
+  console.log("rrInfo: ", rrInfo);
+  //console.log("rrInfo?.CreatedDate: ", rrInfo?.BillToCity);
+  const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(rrInfo?.CreatedDate);
+  
+  const numericQuote = parseFloat(String(repair.quote).replace(/[^0-9.]/g, "")) || 0;
+  
+  console.log('numericQuote: ', numericQuote > 0);
+  const hasQuote = numericQuote > 0 && quoteDate !== null;
+  console.log('hasQuote: ', hasQuote);
+  const workScope = numericQuote > 0 
     ? "Complete disassembly, cleaning, and inspection of all components. Replacement of worn seals and bearings. Recalibration of pressure sensors and testing of all safety systems. Full functional testing and certification."
     : null;
 
@@ -444,7 +453,7 @@ console.log("repair: 315 ", repair);
                 <div className="repair-details-quote-summary-field repair-details-quote-summary-field--price">
                   <div className="repair-details-quote-summary-label">Repair Price</div>
                   <div className="repair-details-quote-summary-value repair-details-quote-summary-value--price">
-                    {hasQuote ? formatCurrency(repair.quote) : "—"}
+                    {hasQuote ? formatCurrency(numericQuote) : "—"}
                   </div>
                 </div>
               </div>
@@ -737,7 +746,7 @@ console.log("repair: 315 ", repair);
           isOpen={isApproveModalOpen}
           onClose={() => setIsApproveModalOpen(false)}
           onSubmit={handleApproveSubmit}
-          quoteAmount={repair.quote}
+          quoteAmount={numericQuote}
         />
       )}
 
