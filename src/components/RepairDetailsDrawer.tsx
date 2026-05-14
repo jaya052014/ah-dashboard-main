@@ -313,7 +313,7 @@ if (contentType && contentType.indexOf("application/json") !== -1) {
     const text = await response.text(); // Get the HTML text
     console.error("Received HTML instead of JSON. Preview:", text.substring(0, 200));
 }*/
-//console.log("repair: 315 ", repair);
+console.log("repair: 315 ", repair);
 		  const jsonData = await response.json();
           console.log("jsonData: ", jsonData);
 		  setRRInfo(jsonData?.responseData?.['RRInfo'][0]);
