@@ -282,8 +282,43 @@ export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }:
   const workScopeItems = INITIAL_WORK_SCOPE_ITEMS;
   const [note, setNote] = useState<string>("");
 
+const [rrInfo, setRRInfo] = useState<any>(null);
   // Handle ESC key
   useEffect(() => {
+	  
+	  const fetchData = async () => {
+      if (repair?.rrNumber) {
+        try {
+			
+		let	rrNumber = repair.rrNumber.replace(/\D/g, "");
+		console.log("rrNumber: ", rrNumber);
+          //const response = await fetch(`http://localhost:3000/api/v1.0/dview/CustomerRRView/${rrNumber}`); // to use complete staging url
+		  const response = await fetch(`https://staging.junoedge.com/api/api/v1.0/dview/CustomerRRView/${rrNumber}`);
+          //console.log("response.text(): ", response.text());
+		  
+		  // Check if it's actually JSON before parsing
+/*const contentType = response.headers.get("content-type");
+if (contentType && contentType.indexOf("application/json") !== -1) {
+    const data = await response.json();
+    console.log(data);
+} else {
+    const text = await response.text(); // Get the HTML text
+    console.error("Received HTML instead of JSON. Preview:", text.substring(0, 200));
+}*/
+console.log("repair: 315 ", repair);
+		  const jsonData = await response.json();
+          console.log("jsonData: ", jsonData);
+		  setRRInfo(jsonData?.responseData?.['RRInfo'][0]);
+		  //console.log("RRInfo: 319: ", rrInfo);
+          // Update your state with jsonData here
+        } catch (error) {
+          console.error("Fetch error:", error);
+        }
+      }
+    };
+
+    fetchData();
+	
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
         onClose();
@@ -293,7 +328,7 @@ export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }:
       document.addEventListener("keydown", handleEsc);
       return () => document.removeEventListener("keydown", handleEsc);
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, repair]);
 
   if (!isOpen || !repair) {
     return null;
