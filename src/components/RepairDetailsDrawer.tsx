@@ -584,7 +584,7 @@ console.log("repair: 315 ", repair);
                 <div className="repair-details-request-details-column">
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Department</div>
-                    <div className="repair-details-meta-value">—</div>
+                    <div className="repair-details-meta-value">{rrInfo?.CustomerDepartmentName}</div>
                   </div>
                   <div className="repair-details-meta-item">
                     <div className="repair-details-meta-label">Machine/Asset</div>
