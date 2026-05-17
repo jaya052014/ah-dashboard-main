@@ -57,25 +57,65 @@ const formatCurrency = (value: number) => {
 // Generate complete status history with progression
 // Only shows statuses that have been reached, plus the current one
 // Only shows Rejected/Not Repairable if that's the actual current status
-const getStatusHistory = (repair: AllRepairsRow | null): StatusHistoryItem[] => {
-  if (!repair) return [];
+const getStatusHistory = (repair: AllRepairsRow, apiStatusHistory: any[] | null): StatusHistoryItem[] => {
+  if (!repair || !apiStatusHistory) return [];
   
-  const history: StatusHistoryItem[] = [];
+  //const history: StatusHistoryItem[] = [];
   const today = new Date();
   const currentStatus = repair.status;
   
+  //console.log('apiStatusHistory.length: ', apiStatusHistory.count);
+ // console.log('apiStatusHistory : ', apiStatusHistory.item.length );
+  let note = "";
+  
+ const history: StatusHistoryItem[]  = apiStatusHistory.map((item) => {
+    // Ensure the date is a valid object for sorting/formatting
+    const statusDate = new Date(item.Created);
+	const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC"
+});
+	//console.log('statusDate: ', statusDate);
+    
+    return {
+      date: dateFormatter.format(statusDate),
+      status: item.HistoryStatusName as RepairStatus,
+      note: "", // You can map item.Comment here if the API provides it
+      timestamp: statusDate,
+    };
+  });
+ /*apiStatusHistory.map((item, index) => (
+
+ history.unshift({
+        date: item.Created,
+        status: item.HistoryStatusName,
+        note,
+        timestamp: date,
+      });
+ 
+ ))*/
+  /*
+  history.unshift({
+        date: date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        status,
+        note,
+        timestamp: date,
+      });*/
+  
   // Define the main progression path (excluding terminal states)
-  const mainProgression: RepairStatus[] = [
+ /* const mainProgression: RepairStatus[] = [
     "Repair Logged",
     "Awaiting Quote",
     "PO",
     "Awaiting Approval",
     "In Progress",
     "Completed",
-  ];
+  ];*/
   
   // If current status is in main progression, show all up to current
-  if (mainProgression.includes(currentStatus)) {
+ /* if (mainProgression.includes(currentStatus)) {
     const currentIndex = mainProgression.indexOf(currentStatus);
     for (let i = 0; i <= currentIndex; i++) {
       const status = mainProgression[i];
@@ -156,9 +196,10 @@ const getStatusHistory = (repair: AllRepairsRow | null): StatusHistoryItem[] => 
       note,
       timestamp: date,
     });
-  }
+  }*/
   
-  return history;
+  //return history;
+  return history.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 };
 
 // Demo attachments - fixed Unsplash images for Attachments gallery
@@ -190,7 +231,7 @@ const getAttachments = (_repair: AllRepairsRow | null, apiAttachments: any[] | n
   }
   
   return rrImages;*/
-  console.log('apiAttachments.length: ', apiAttachments?.length);
+ // console.log('apiAttachments.length: ', apiAttachments?.length);
   if (!apiAttachments || apiAttachments.length === 0) {
     return DEMO_ATTACHMENTS;
   }
@@ -284,7 +325,7 @@ const getDaysInProgressColor = (days: number): {
 };
 
 export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }: RepairDetailsDrawerProps) {
-  const statusHistory = getStatusHistory(repair);
+  
   
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -296,7 +337,7 @@ export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }:
 
 const [rrInfo, setRRInfo] = useState<any>(null);
 const [rrAttachments, setRRAttachments] = useState<any>(null);
-
+const [rrStatusHistory, setRRStatusHistory] = useState<any>(null);
 
   // Handle ESC key
   useEffect(() => {
@@ -306,7 +347,7 @@ const [rrAttachments, setRRAttachments] = useState<any>(null);
         try {
 			
 		let	rrNumber = repair.rrNumber.replace(/\D/g, "");
-		console.log("rrNumber: ", rrNumber);
+		//console.log("rrNumber: ", rrNumber);
           //const response = await fetch(`http://localhost:3000/api/v1.0/dview/CustomerRRView/${rrNumber}`); // to use complete staging url
 		  const response = await fetch(`https://staging.junoedge.com/api/api/v1.0/dview/CustomerRRView/${rrNumber}`);
           //console.log("response.text(): ", response.text());
@@ -320,11 +361,12 @@ if (contentType && contentType.indexOf("application/json") !== -1) {
     const text = await response.text(); // Get the HTML text
     console.error("Received HTML instead of JSON. Preview:", text.substring(0, 200));
 }*/
-console.log("repair: 315 ", repair);
+//console.log("repair: 315 ", repair);
 		  const jsonData = await response.json();
-          console.log("jsonData: ", jsonData);
+          //console.log("jsonData: ", jsonData);
 		  setRRInfo(jsonData?.responseData?.['RRInfo'][0]);
 		  setRRAttachments(jsonData?.responseData?.['RRImages']);
+		  setRRStatusHistory(jsonData?.responseData?.['RRStatusHistory']);
 		  //console.log("RRInfo: 319: ", rrInfo);
           // Update your state with jsonData here
         } catch (error) {
@@ -346,22 +388,24 @@ console.log("repair: 315 ", repair);
     }
   }, [isOpen, onClose, repair]);
 const attachmentImages = getAttachments(repair, rrAttachments);
+const statusHistory = getStatusHistory(repair, rrStatusHistory);
+
   if (!isOpen || !repair) {
     return null;
   }
 
   // Mock quote data - in production, this would come from the repair object or API
   //const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-  console.log("repair: ", repair);
-  console.log("rrInfo: ", rrInfo);
+  //console.log("repair: ", repair);
+  //console.log("rrInfo: ", rrInfo);
   //console.log("rrInfo?.CreatedDate: ", rrInfo?.BillToCity);
   const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(rrInfo?.CreatedDate);
   
   const numericQuote = parseFloat(String(repair.quote).replace(/[^0-9.]/g, "")) || 0;
   
-  console.log('numericQuote: ', numericQuote > 0);
+  //console.log('numericQuote: ', numericQuote > 0);
   const hasQuote = numericQuote > 0 && quoteDate !== null;
-  console.log('hasQuote: ', hasQuote);
+  //console.log('hasQuote: ', hasQuote);
   const workScope = numericQuote > 0 
     ? "Complete disassembly, cleaning, and inspection of all components. Replacement of worn seals and bearings. Recalibration of pressure sensors and testing of all safety systems. Full functional testing and certification."
     : null;
