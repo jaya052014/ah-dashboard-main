@@ -329,7 +329,8 @@ export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }:
   
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [customerReferences, setCustomerReferences] = useState<CustomerReference[]>(INITIAL_CUSTOMER_REFERENCES);
+  //const [customerReferences, setCustomerReferences] = useState<CustomerReference[]>(INITIAL_CUSTOMER_REFERENCES);
+  const [customerReferences, setCustomerReferences] = useState<any[]>();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const workScopeItems = INITIAL_WORK_SCOPE_ITEMS;
@@ -367,7 +368,8 @@ if (contentType && contentType.indexOf("application/json") !== -1) {
 		  setRRInfo(jsonData?.responseData?.['RRInfo'][0]);
 		  setRRAttachments(jsonData?.responseData?.['RRImages']);
 		  setRRStatusHistory(jsonData?.responseData?.['RRStatusHistory']);
-		  //console.log("RRInfo: 319: ", rrInfo);
+		  setCustomerReferences(jsonData?.responseData?.['CustomerRefInfo']);
+		  console.log("customerReferences: ", customerReferences);
           // Update your state with jsonData here
         } catch (error) {
           console.error("Fetch error:", error);
@@ -685,12 +687,12 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
                   </tr>
                 </thead>
                 <tbody>
-                  {customerReferences.map((ref, index) => (
-                    <tr key={ref.id}>
+                  {customerReferences?.map((ref, index) => (
+                    <tr key={ref.CReferenceId ?? index}>
                       <td className="repair-details-customer-references-index">{index + 1}</td>
-                      <td className="repair-details-customer-references-name">{ref.name}</td>
+                      <td className="repair-details-customer-references-name">{ref.ReferenceLabelName}</td>
                       <td className="repair-details-customer-references-value">
-                        {editingId === ref.id ? (
+                        {editingId === ref.CReferenceId ? (
                           <input
                             type="text"
                             className="repair-details-customer-references-input"
@@ -699,16 +701,16 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
                             autoFocus
                           />
                         ) : (
-                          <span>{ref.value}</span>
+                          <span>{ref.ReferenceValue}</span>
                         )}
                       </td>
                       <td className="repair-details-customer-references-actions">
-                        {editingId === ref.id ? (
+                        {editingId === ref.CReferenceId ? (
                           <>
                             <button
                               type="button"
                               className="repair-details-customer-references-action-btn"
-                              onClick={() => handleSaveReference(ref.id)}
+                              onClick={() => handleSaveReference(ref.CReferenceId)}
                               aria-label="Save"
                             >
                               <CheckIcon className="repair-details-customer-references-action-icon" />
@@ -726,7 +728,7 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
                           <button
                             type="button"
                             className="repair-details-customer-references-action-btn"
-                            onClick={() => handleEditReference(ref.id, ref.value)}
+                            onClick={() => handleEditReference(ref.CReferenceId, ref.ReferenceValue)}
                             aria-label="Edit"
                           >
                             <PencilIcon className="repair-details-customer-references-action-icon" />
