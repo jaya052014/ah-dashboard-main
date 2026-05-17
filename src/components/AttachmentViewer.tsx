@@ -66,7 +66,8 @@ export function AttachmentViewer({ images }: AttachmentViewerProps) {
 
   // Show first image as main, images 2-5 as thumbnails (up to 4 thumbnails)
   const mainImage = validImages[0];
-  const thumbnails = validImages.length > 1 ? validImages.slice(1, 5) : [];
+ // const thumbnails = validImages.length > 1 ? validImages.slice(1, 5) : [];
+  const thumbnails = validImages;
   const currentImage = selectedImage && validImages.includes(selectedImage) 
     ? selectedImage 
     : mainImage;
@@ -115,7 +116,7 @@ export function AttachmentViewer({ images }: AttachmentViewerProps) {
                   currentImage === image ? "attachment-viewer-thumbnail--active" : ""
                 }`}
                 onClick={() => handleThumbnailClick(image)}
-                aria-label={`View attachment ${index + 2}`}
+                aria-label={`View attachment ${index + 1}`}
               >
                 <img
                   src={image}
