@@ -58,7 +58,7 @@ const stats = data?.responseData?.CountStatistics?.[0];
 
 // Jaya EOC
 
-// Helper function to get all status summaries
+// Helper function to get all status summaries - console
 function getAllStatusSummaries(repairs: AllRepairsRow[]): Record<RepairStatus, { count: number; totalAmount: number }> {
   const statuses: RepairStatus[] = [
     "Repair Logged",
