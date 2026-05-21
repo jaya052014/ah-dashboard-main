@@ -146,13 +146,13 @@ export const REPAIR_STATUS_CONFIG: Record<RepairStatus, RepairStatusConfig> = {
     badgeTextColor: "#475569", // Slate-600
     iconColor: "#64748b", // Slate-500
   },
-   "Awaiting approval": {
+   /*"Awaiting approval": {
     label: "Awaiting Approval",
     IconComponent: InboxArrowDownIcon,
     badgeBackground: "#fef3c7", // Amber/orange tint
     badgeTextColor: "#d97706", // Amber-600
     iconColor: "#f59e0b", // Amber-500
-  },
+  },*/
   
 };
 
@@ -172,7 +172,7 @@ export const FILTER_STATUSES: RepairStatus[] = [
   "Logged",
   "Under Evaluation",
   "Not Repairable",
-  "Awaiting approval",
+  "Awaiting Approval",
   "In Progress",
   "Completed",
   "Rejected",  
