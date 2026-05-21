@@ -369,7 +369,7 @@ if (contentType && contentType.indexOf("application/json") !== -1) {
 		  setRRAttachments(jsonData?.responseData?.['RRImages']);
 		  setRRStatusHistory(jsonData?.responseData?.['RRStatusHistory']);
 		  setCustomerReferences(jsonData?.responseData?.['CustomerRefInfo']);
-		  console.log("customerReferences: ", customerReferences);
+		  //console.log("rrInfo: ", rrInfo);
           // Update your state with jsonData here
         } catch (error) {
           console.error("Fetch error:", error);
@@ -399,7 +399,7 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
   // Mock quote data - in production, this would come from the repair object or API
   //const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
   //console.log("repair: ", repair);
-  //console.log("rrInfo: ", rrInfo);
+  console.log("rrInfo: ", rrInfo);
   //console.log("rrInfo?.CreatedDate: ", rrInfo?.BillToCity);
   const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(rrInfo?.CreatedDate);
   
@@ -574,8 +574,8 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
               {/* Work Scope Text */}
               <div className="repair-details-quote-summary-scope">
                 <div className="repair-details-quote-summary-label">WORK SCOPE</div>
-                <div className="repair-details-quote-summary-scope-content">
-                  {workScope || "—"}
+                <div className="repair-details-quote-summary-scope-content"> 
+                  {rrInfo?.WorkScope || "—"}
                 </div>
               </div>
 
