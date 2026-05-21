@@ -388,7 +388,8 @@ export function AllRepairsFilters({
             <div className="all-orders-filter-divider" />
             {openDropdowns.bulkAction && selectedRowIds.size > 0 && (
               <div className="app-select-menu" style={{ minWidth: "160px" }}>
-                {/* Calculate eligibility */}
+                {/* Calculate eligibility 
+				console*/}
                 {(() => {
                   const selectedIds = Array.from(selectedRowIds);
                   const eligibleForApprove = selectedIds.filter(id => {
