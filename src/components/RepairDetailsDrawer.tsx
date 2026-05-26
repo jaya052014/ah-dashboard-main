@@ -728,16 +728,21 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
                               <XMarkIcon className="repair-details-customer-references-action-icon" />
                             </button>
                           </>
-                        ) : (
+                        ) : (ref.IsEditableByCustomer === 1 && (
+						
                           <button
                             type="button"
                             className="repair-details-customer-references-action-btn"
                             onClick={() => handleEditReference(ref.CReferenceId, ref.ReferenceValue)}
                             aria-label="Edit"
                           >
+						 
                             <PencilIcon className="repair-details-customer-references-action-icon" />
+							
                           </button>
-                        )}
+						  )
+                        )
+						}
                       </td>
                     </tr>
                   ))}
