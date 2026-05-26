@@ -331,9 +331,10 @@ export function RepairDetailsDrawer({ isOpen, onClose, repair, onRepairUpdate }:
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   //const [customerReferences, setCustomerReferences] = useState<CustomerReference[]>(INITIAL_CUSTOMER_REFERENCES);
   const [customerReferences, setCustomerReferences] = useState<any[]>();
+  const [workScopeItems, setWorkScopeItems] = useState<any[]>();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<string>("");
-  const workScopeItems = INITIAL_WORK_SCOPE_ITEMS;
+  //const workScopeItems = INITIAL_WORK_SCOPE_ITEMS;
   const [note, setNote] = useState<string>("");
 
 const [rrInfo, setRRInfo] = useState<any>(null);
@@ -369,6 +370,9 @@ if (contentType && contentType.indexOf("application/json") !== -1) {
 		  setRRAttachments(jsonData?.responseData?.['RRImages']);
 		  setRRStatusHistory(jsonData?.responseData?.['RRStatusHistory']);
 		  setCustomerReferences(jsonData?.responseData?.['CustomerRefInfo']);
+		  
+		  setWorkScopeItems(jsonData?.responseData?.['QuoteItem']);
+		  
 		  //console.log("rrInfo: ", rrInfo);
           // Update your state with jsonData here
         } catch (error) {
@@ -399,7 +403,7 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
   // Mock quote data - in production, this would come from the repair object or API
   //const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
   //console.log("repair: ", repair);
-  console.log("rrInfo: ", rrInfo);
+  console.log("WorkScopeItems: ", workScopeItems);
   //console.log("rrInfo?.CreatedDate: ", rrInfo?.BillToCity);
   const quoteDate = repair.status === "Awaiting Quote" ? null : new Date(rrInfo?.CreatedDate);
   
@@ -591,19 +595,19 @@ const statusHistory = getStatusHistory(repair, rrStatusHistory);
                     </tr>
                   </thead>
                   <tbody>
-                    {workScopeItems.length > 0 ? (
-                      workScopeItems.map((item) => (
-                        <tr key={item.id}>
+                    {workScopeItems?.length > 0 ? (
+                      workScopeItems?.map((item) => (
+                        <tr >
                           <td className="repair-details-work-scope-part-desc">
-                            <div className="repair-details-work-scope-part-number">{item.partNumber}</div>
-                            <div className="repair-details-work-scope-description-text">{item.description}</div>
+                            <div className="repair-details-work-scope-part-number">{item.PartNo}</div>
+                            <div className="repair-details-work-scope-description-text">{item.Description}</div>
                           </td>
-                          <td className="repair-details-work-scope-qty">{item.qty}</td>
+                          <td className="repair-details-work-scope-qty">{item.Quantity}</td>
                           <td className="repair-details-work-scope-numeric">
-                            {formatCurrency(item.total / item.qty)}
+                            {formatCurrency(item.UnitPrice)}
                           </td>
                           <td className="repair-details-work-scope-numeric">
-                            {formatCurrency(item.total)}
+                            {formatCurrency(item.Total)}
                           </td>
                         </tr>
                       ))
