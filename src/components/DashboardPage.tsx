@@ -36,7 +36,7 @@ import { AppMultiSelect } from "./common/AppMultiSelect";
 import { MaintenanceManagers } from "../pages/MaintenanceManagers";
 import ahGroupLogo from "../assets/ah-group-logo.png";
 import clientLogo from "../assets/client-logo.png";
-import { getSiteOptions, getDepartmentOptions } from "../constants/sitesAndDepartments";
+import { getDepartmentOptions } from "../constants/sitesAndDepartments";
 
 
 // Organization tree structure
@@ -82,9 +82,36 @@ function flattenOrgTree(node: OrgNode, result: OrgNode[] = []): OrgNode[] {
 //   return null;
 // }
 
+const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/DashboardCustomerList');
+const jsonCustomerList = await response.json(); 
+console.log("jsonCustomerList: ", jsonCustomerList);
+
+const getSiteOptions = (customerData) => {
+ if (!customerData?.responseData || !Array.isArray(customerData.responseData)) {
+    return [];
+  }
+
+  // Map directly to what AppMultiSelect expects (value and label)
+  return customerData.responseData.map(site => ({
+    value: site.CustomerId,
+    label: site.CustomerName
+  }));
+};
+
+const getDeptOptions = (customerDeptData) => {
+ if (!customerDeptData?.responseData || !Array.isArray(customerDeptData.responseData)) {
+    return [];
+  }
+
+  // Map directly to what AppMultiSelect expects (value and label)
+  return customerDeptData.responseData.map(dept => ({
+    value: dept.DepartmentId,
+    label: dept.CustomerDepartmentName
+  }));
+};
 
 export function DashboardPage() {
-  // Route-based navigation
+  // Route-based navigationhttps://staging.junoedge.com/api/api/v1.0/dview/DashboardCustomerList
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
     // Default to Dashboard route
     return "/dashboard";
@@ -103,11 +130,77 @@ export function DashboardPage() {
   
   // Site and Department filter state - shared across dashboard
   // Use canonical lists from constants
-  const SITE_OPTIONS = getSiteOptions();
+  //const SITE_OPTIONS = getSiteOptions();
   const DEPARTMENT_OPTIONS = getDepartmentOptions();
   
-  const [selectedSites, setSelectedSites] = useState<string[]>(["all"]);
+  const [selectedSites, setSelectedSites] = useState<string[]>([""]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>(["all"]);
+  
+  const [siteOptions, setSiteOptions] = useState([]);
+  const [deptOptions, setDeptOptions] = useState([]);
+  
+  useEffect(() => {
+    const loadSites = async () => {
+      try {
+        const response = await fetch('https://staging.junoedge.com/api/api/v1.0/dview/DashboardCustomerList');
+        const jsonCustomerList = await response.json();
+        
+        const formattedOptions = getSiteOptions(jsonCustomerList);
+		
+		const allOption = { value: "all", label: "(All)" };
+		const completeOptions = [allOption, ...formattedOptions];
+		
+        setSiteOptions(completeOptions);
+		
+		if (formattedOptions.length > 0) {
+        //const allIds = formattedOptions.map(site => site.value);
+        setSelectedSites(["all"]);
+      }
+		
+      } catch (error) {
+        console.error("Error loading dropdown data:", error);
+      }
+    };
+
+    loadSites();
+  }, []);
+  
+  useEffect(() => {
+	  
+	   
+		const selectedIds = selectedSites;
+		//const body = { CustomerId: selectedIds.join(',') };
+
+    const loadDepts = async () => {
+      try {
+        const response = await fetch(' https://staging.junoedge.com/api/api/v1.0/dview/DashboardCustomerDeptList/0', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add 'Authorization': `Bearer ${your_token}` here if the API requires authentication
+        },
+        body: JSON.stringify({ CustomerId: selectedSites.join(',') }),
+      });
+
+		
+        const jsonCustomerDeptList = await response.json();
+        
+        const formattedOptions = getDeptOptions(jsonCustomerDeptList);
+        setDeptOptions(formattedOptions);
+		
+		if (formattedOptions.length > 0) {
+        const allIds = formattedOptions.map(dept => dept.value);
+        setSelectedDepts(allIds);
+      }
+		
+		  console.log('depts: ', jsonCustomerDeptList);
+      } catch (error) {
+        console.error("Error loading dropdown data:", error);
+      }
+    };
+
+    loadDepts();
+  }, []);
 
   const handleNavigate = (route: string) => {
     // Redirect root route to Dashboard
@@ -213,10 +306,10 @@ export function DashboardPage() {
             <div className="topbar-filters">
               <AppMultiSelect
                 value={selectedSites}
-                options={SITE_OPTIONS}
+                options={siteOptions}
                 onChange={setSelectedSites}
                 placeholder="All sites"
-                selectAllLabel="(All)"
+                selectAllLabel="(All)" 
                 selectedLabel="sites"
                 className="topbar-filter"
               />
